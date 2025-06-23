@@ -194,58 +194,88 @@ const Popup: React.FC = () => {
         <h1 className={styles.title}>EasyDaddy</h1>
       </header>
 
-      <section className={styles.section}>
-        <div className={styles.profileActions}>
-          <select
-            value={activeProfile}
-            onChange={(e) => handleSelectProfile(e.target.value)}
-            className={styles.profileSelector}
-            disabled={!profiles.length}
-          >
-            <option value="" disabled>
-              {profiles.length ? 'Select a profile' : 'No profiles'}
-            </option>
-            {profiles.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
-          <button onClick={handleCreateProfile} className={styles.button}>New</button>
-          <button onClick={handleDeleteProfile} className={`${styles.button} ${styles.buttonDanger}`} disabled={!activeProfile}>
-            Del
-          </button>
-        </div>
-      </section>
+      <div className={styles.content}>
+        <section className={styles.section}>
+          <label className={styles.sectionTitle}>Profile Management</label>
+          <div className={styles.profileActions}>
+            <select
+              value={activeProfile}
+              onChange={(e) => handleSelectProfile(e.target.value)}
+              className={styles.profileSelector}
+              disabled={!profiles.length}
+            >
+              <option value="" disabled>
+                {profiles.length ? 'Select a profile' : 'No profiles'}
+              </option>
+              {profiles.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+            <button 
+              onClick={handleCreateProfile} 
+              className={`${styles.button} ${styles.buttonSecondary} ${styles.compact}`}
+            >
+              New
+            </button>
+            <button 
+              onClick={handleDeleteProfile} 
+              className={`${styles.button} ${styles.buttonDanger} ${styles.compact}`} 
+              disabled={!activeProfile}
+            >
+              Delete
+            </button>
+          </div>
+        </section>
 
-      <section className={styles.section}>
-        <label htmlFor="profile-editor" className={styles.sectionTitle}>
-          Profile Data (JSON)
-        </label>
-        <textarea
-          id="profile-editor"
-          className={styles.profileEditor}
-          value={profileDataText}
-          onChange={(e) => handleTextChange(e.target.value)}
-          disabled={!activeProfile}
-          placeholder={status}
-        />
-        <input
-          type="file"
-          id="file-upload"
-          ref={fileInputRef}
-          className={styles.fileInput}
-          onChange={handleFileChange}
-          accept=".txt,.md,.pdf"
-        />
-         <label htmlFor="file-upload" className={`${styles.fileInputLabel} ${!activeProfile ? styles.disabled : ''}`}>
-          Upload & Parse Resume
-        </label>
-      </section>
+        <section className={styles.section}>
+          <label htmlFor="profile-editor" className={styles.sectionTitle}>
+            Profile Data
+          </label>
+          <textarea
+            id="profile-editor"
+            className={styles.profileEditor}
+            value={profileDataText}
+            onChange={(e) => handleTextChange(e.target.value)}
+            disabled={!activeProfile}
+            placeholder={activeProfile ? "Your profile data will appear here..." : status}
+          />
+          
+          <input
+            type="file"
+            id="file-upload"
+            ref={fileInputRef}
+            className={styles.fileInput}
+            onChange={handleFileChange}
+            accept=".txt,.md,.pdf"
+            disabled={!activeProfile}
+          />
+          <label 
+            htmlFor="file-upload" 
+            className={`${styles.fileInputLabel} ${!activeProfile ? styles.disabled : ''}`}
+          >
+            📄 Upload & Parse Document
+          </label>
+        </section>
+
+        {status && (
+          <div className={`${styles.status} ${
+            status.includes('Error') ? styles.error : 
+            status.includes('successfully') || status.includes('filled') ? styles.success :
+            status.includes('...') ? styles.loading : ''
+          }`}>
+            {status}
+          </div>
+        )}
+      </div>
       
       <footer className={styles.footer}>
-        <button onClick={handleFillForms} className={`${styles.button} ${styles.buttonPrimary}`} disabled={!activeProfile}>
-          Fill Out Forms on Page
+        <button 
+          onClick={handleFillForms} 
+          className={`${styles.button} ${styles.buttonPrimary}`} 
+          disabled={!activeProfile}
+        >
+          🚀 Fill Out Forms on Page
         </button>
-        <p className={styles.status}>{status}</p>
       </footer>
     </div>
   );

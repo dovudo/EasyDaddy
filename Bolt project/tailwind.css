@@ -1,0 +1,212 @@
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .all-\[unset\] {
+    all: unset;
+  }
+}
+
+:root {
+  --action: rgba(41, 94, 255, 1);
+  --app-primary: rgba(255, 122, 110, 1);
+  --app-secondary: rgba(255, 189, 111, 1);
+  --base-black: rgba(0, 0, 0, 1);
+  --baseblack: rgba(0, 0, 0, 1);
+  --black: rgba(26, 35, 43, 1);
+  --button: 0px 2px 2px 0px rgba(0, 0, 0, 0.06);
+  --color-1: rgba(30, 29, 28, 1);
+  --color-2: rgba(248, 131, 121, 1);
+  --color-3: rgba(255, 255, 255, 1);
+  --extension-body-text-font-family: "Inter", Helvetica;
+  --extension-body-text-font-size: 18px;
+  --extension-body-text-font-style: normal;
+  --extension-body-text-font-weight: 400;
+  --extension-body-text-letter-spacing: 0px;
+  --extension-body-text-line-height: 145%;
+  --extension-button-font-family: "Inter", Helvetica;
+  --extension-button-font-size: 16px;
+  --extension-button-font-style: normal;
+  --extension-button-font-weight: 500;
+  --extension-button-letter-spacing: 0px;
+  --extension-button-line-height: 145%;
+  --extension-h1-font-family: "Inter", Helvetica;
+  --extension-h1-font-size: 36px;
+  --extension-h1-font-style: normal;
+  --extension-h1-font-weight: 700;
+  --extension-h1-letter-spacing: -0.72px;
+  --extension-h1-line-height: 135%;
+  --extension-h2-font-family: "Inter", Helvetica;
+  --extension-h2-font-size: 28px;
+  --extension-h2-font-style: normal;
+  --extension-h2-font-weight: 700;
+  --extension-h2-letter-spacing: -0.2800000000000001px;
+  --extension-h2-line-height: 140%;
+  --extension-h3-font-family: "Inter", Helvetica;
+  --extension-h3-font-size: 24px;
+  --extension-h3-font-style: normal;
+  --extension-h3-font-weight: 700;
+  --extension-h3-letter-spacing: -0.24px;
+  --extension-h3-line-height: 140%;
+  --extension-headline-font-family: "Inter", Helvetica;
+  --extension-headline-font-size: 22px;
+  --extension-headline-font-style: normal;
+  --extension-headline-font-weight: 500;
+  --extension-headline-letter-spacing: 0px;
+  --extension-headline-line-height: 145%;
+  --extension-label-font-family: "Inter", Helvetica;
+  --extension-label-font-size: 14px;
+  --extension-label-font-style: normal;
+  --extension-label-font-weight: 400;
+  --extension-label-letter-spacing: 0px;
+  --extension-label-line-height: 145%;
+  --form-shadow: 0px 0px 2px 0px rgba(0, 0, 0, 0.1);
+  --full-white: rgba(255, 255, 255, 1);
+  --gray-border: rgba(207, 207, 207, 1);
+  --iconbrowser-controlslight: rgba(60, 64, 67, 1);
+  --iconurl-controlsdisabledlight: rgba(186, 188, 190, 1);
+  --web-above-title-font-family: "Inter", Helvetica;
+  --web-above-title-font-size: 20px;
+  --web-above-title-font-style: normal;
+  --web-above-title-font-weight: 400;
+  --web-above-title-letter-spacing: 0px;
+  --web-above-title-line-height: 145%;
+  --web-body-text-font-family: "Inter", Helvetica;
+  --web-body-text-font-size: 18px;
+  --web-body-text-font-style: normal;
+  --web-body-text-font-weight: 400;
+  --web-body-text-letter-spacing: 0px;
+  --web-body-text-line-height: 145%;
+  --web-button-font-family: "Inter", Helvetica;
+  --web-button-font-size: 16px;
+  --web-button-font-style: normal;
+  --web-button-font-weight: 500;
+  --web-button-letter-spacing: 0px;
+  --web-button-line-height: 150%;
+  --web-h1-font-family: "Inter", Helvetica;
+  --web-h1-font-size: 64px;
+  --web-h1-font-style: normal;
+  --web-h1-font-weight: 700;
+  --web-h1-letter-spacing: -1.92px;
+  --web-h1-line-height: 130%;
+  --web-h2-font-family: "Inter", Helvetica;
+  --web-h2-font-size: 56px;
+  --web-h2-font-style: normal;
+  --web-h2-font-weight: 700;
+  --web-h2-letter-spacing: -1.1200000000000003px;
+  --web-h2-line-height: 135%;
+  --web-h3-font-family: "Inter", Helvetica;
+  --web-h3-font-size: 48px;
+  --web-h3-font-style: normal;
+  --web-h3-font-weight: 700;
+  --web-h3-letter-spacing: -0.96px;
+  --web-h3-line-height: 135%;
+  --web-headline-font-family: "Inter", Helvetica;
+  --web-headline-font-size: 40px;
+  --web-headline-font-style: normal;
+  --web-headline-font-weight: 500;
+  --web-headline-letter-spacing: -0.4px;
+  --web-headline-line-height: 140%;
+  --web-label-font-family: "Inter", Helvetica;
+  --web-label-font-size: 14px;
+  --web-label-font-style: normal;
+  --web-label-font-weight: 400;
+  --web-label-letter-spacing: 0px;
+  --web-label-line-height: 145%;
+  --web-large-font-family: "Inter", Helvetica;
+  --web-large-font-size: 72px;
+  --web-large-font-style: normal;
+  --web-large-font-weight: 700;
+  --web-large-letter-spacing: -2.16px;
+  --web-large-line-height: 130%;
+  --web-subheadline-font-family: "Inter", Helvetica;
+  --web-subheadline-font-size: 24px;
+  --web-subheadline-font-style: normal;
+  --web-subheadline-font-weight: 500;
+  --web-subheadline-letter-spacing: 0px;
+  --web-subheadline-line-height: 140%;
+  --white: rgba(252, 252, 252, 1);
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 47.4% 11.2%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+
+    --card: transparent;
+    --card-foreground: 222.2 47.4% 11.2%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 210 40% 98%;
+
+    --ring: 215 20.2% 65.1%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+
+    --muted: 223 47% 11%;
+    --muted-foreground: 215.4 16.3% 56.9%;
+
+    --accent: 216 34% 17%;
+    --accent-foreground: 210 40% 98%;
+
+    --popover: 224 71% 4%;
+    --popover-foreground: 215 20.2% 65.1%;
+
+    --border: 216 34% 17%;
+    --input: 216 34% 17%;
+
+    --card: transparent;
+    --card-foreground: 213 31% 91%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 1.2%;
+
+    --secondary: 222.2 47.4% 11.2%;
+    --secondary-foreground: 210 40% 98%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --ring: 216 34% 17%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}

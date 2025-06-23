@@ -1,8 +1,20 @@
-const OPENAI_MODEL = "gpt-4o-mini";
-// Vite replaces `import.meta.env.VITE_OPENAI_API_KEY` with the actual key at build time.
-const OPENAI_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+// EasyDaddy Extension - Background Script
+// 
+// LLM Integration via OpenRouter API with configurable models
+// 
+// Configuration is now managed in src/lib/llm-config.ts
+// To switch models: Update CONFIG.activeModel in llm-config.ts
+// To add new models: Add them to MODELS in llm-config.ts
+//
+// Environment Variables Required:
+// - VITE_OPENROUTER_API_KEY: Your OpenRouter API key (preferred)
+// - VITE_OPENAI_API_KEY: For direct OpenAI API calls
 
-const API_URL = "https://api.openai.com/v1/chat/completions";
+import { 
+  LLMConfig,
+  CONFIG,
+  buildModelConfig
+} from './lib/llm-config.js';
 
 // Comprehensive, extensible profile schema
 const PROFILE_SCHEMA = {
@@ -146,19 +158,32 @@ const AUTOFILL_PROMPT = `You are FormAutoFiller_v2, an expert at understanding w
 
 You will receive:
 1. PAGE_CONTEXT: Contains URL, title, and an array of form fields with rich descriptions
-2. USER_PROFILE: A comprehensive profile with categorized information:
-   - personal: Basic personal info, contact details, address
-   - professional: Work experience, skills, current role, salary expectations
-   - education: Academic background, degrees, institutions
-   - projects: Personal/professional projects and their details
-   - research: Publications, patents, academic work
-   - additional: Certifications, languages, hobbies, awards
-   - documents: Links to portfolios, social profiles, etc.
+2. USER_PROFILE: A comprehensive profile with categorized information
 
 Your task:
 1. Analyze each field's description to understand what type of information it needs
 2. Navigate the appropriate section(s) of USER_PROFILE to find matching data
 3. Return ONLY a valid JSON object with CSS selectors as keys and appropriate values
+
+FIELD TYPE HANDLING:
+
+**TEXT INPUTS** (Type: text, email, tel, etc.):
+- Return the actual text value to fill in
+
+**DROPDOWNS** (Type: select):
+- Look for "Available options: [...]" in the description
+- Return the EXACT option text that best matches the user's data
+- If no exact match, choose the closest option from the available list
+- Common mappings: "Bachelor's Degree", "Master's Degree", "Yes", "No", etc.
+
+**CHECKBOXES** (Type: checkbox):
+- Return "true" to check the box, "false" to uncheck
+- Base decision on user data relevance (e.g., "Do you have experience with Java?" → "true" if Java is in skills)
+
+**RADIO BUTTONS** (Type: radio button):
+- Return "true" for the option that should be selected
+- Only one radio button in a group should get "true", others get "false" or are omitted
+- Look for "Radio group options: [...]" in the description
 
 FIELD MATCHING STRATEGY:
 - Name fields → personal.firstName, personal.lastName, personal.fullName
@@ -169,62 +194,123 @@ FIELD MATCHING STRATEGY:
 - Skills → professional.skills.* (choose most relevant type)
 - Education → education[0].* (most recent/relevant)
 - Experience → professional.experience[*] (choose most relevant)
-- Projects → projects[*] (choose most relevant)
-- Portfolio/Social → documents.*
-- Salary → professional.salaryExpectation
-- Availability → professional.availabilityDate
+- Authorization/Legal questions → Use common sense: usually "Yes" for work authorization
+- Referral questions → Usually "No" unless explicitly mentioned in profile
 
 IMPORTANT GUIDELINES:
-- Prioritize exact matches over approximate ones
-- For experience fields, use the most recent or most relevant entry
-- For dropdown/select fields, return simple, common values (e.g., "Yes", "No", "Bachelor's", "Master's")
-- Skip fields if no appropriate data exists rather than guessing
-- Use full names, not abbreviations (e.g., "Bachelor of Science" not "BS")
+- For dropdowns: MUST use exact text from available options
+- For yes/no questions: Return "Yes" or "No" (exact case from options)
+- For experience levels: Match to actual experience (Junior, Mid-level, Senior)
+- For education dropdowns: Use full degree names ("Bachelor of Science", not "BS")
+- Skip fields if no appropriate data exists
 - For required fields, try harder to find appropriate data
 
 Example response:
 {
   "input[name='firstName']": "Alexander",
   "input[name='email']": "dovjobs@gmail.com",
-  "#current-position": "Backend Developer",
-  "select[name='education-level']": "Bachelor's Degree"
+  "select[name='experience-level']": "Senior",
+  "input[type='checkbox'][name='java-experience']": "true",
+  "input[type='radio'][name='authorization'][value='yes']": "true"
 }
 
 Return ONLY the JSON object, no additional text.`;
 
-console.log('EasyDaddy background script loaded.');
+// Log startup information
+console.log(`EasyDaddy background script loaded. Using model: ${CONFIG.model}`);
+console.log(`API base: ${CONFIG.baseUrl} | JSON mode: ${CONFIG.supportsJsonMode} | Temp: ${CONFIG.temperature} | Max tokens: ${CONFIG.maxTokens}`);
 
-async function chat(systemPrompt: string, userContent: string): Promise<any> {
-  if (!OPENAI_KEY) {
-    throw new Error("OpenAI API key is not configured.");
+async function chat(systemPrompt: string, userContent: string, modelName?: string): Promise<any> {
+  const config = buildModelConfig(modelName);
+  const apiUrl = config.baseUrl + '/chat/completions';
+  
+  // Build headers for the request
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${config.apiKey}`,
+  };
+
+  // Add provider-specific headers
+  if (config.headers) {
+    Object.assign(headers, config.headers);
   }
 
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENAI_KEY}`,
-    },
-    body: JSON.stringify({
-      model: OPENAI_MODEL,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userContent },
-      ],
-    }),
-  });
+  const requestBody: any = {
+    model: config.model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userContent },
+    ],
+    temperature: config.temperature,
+    max_tokens: config.maxTokens,
+  };
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`OpenAI API request failed: ${response.status} ${response.statusText} - ${errorBody}`);
+  // Add response_format for JSON mode if supported
+  if (config.supportsJsonMode) {
+    requestBody.response_format = { type: "json_object" };
   }
 
-  const data = await response.json();
-  try {
-    return JSON.parse(data.choices[0].message.content);
-  } catch (e) {
-    throw new Error("Failed to parse JSON response from OpenAI.");
+  if (CONFIG.debug) {
+    console.log('Chat request:', { model: config.model, headers, requestBody });
+  }
+
+  // Retry logic
+  for (let attempt = 1; attempt <= CONFIG.retries.maxAttempts; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), CONFIG.requestTimeout);
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorBody}`);
+      }
+
+      const data = await response.json();
+      
+      if (CONFIG.debug) {
+        console.log('Chat response:', data);
+      }
+
+      try {
+        return JSON.parse(data.choices[0].message.content);
+      } catch (parseError) {
+        // If JSON parsing fails, try to return the raw content for manual inspection
+        console.warn('Failed to parse JSON response, returning raw content:', data.choices[0].message.content);
+        throw new Error(`Failed to parse JSON response: ${parseError.message}`);
+      }
+
+    } catch (error) {
+      console.error(`Chat attempt ${attempt} failed:`, error);
+      
+      // If this is the last attempt or a non-retryable error, throw
+      if (attempt === CONFIG.retries.maxAttempts || error.name === 'AbortError') {
+        // Try fallback models if configured and this is the first model attempt
+        if (!modelName && CONFIG.fallbackModels.length > 0) {
+          console.log('Trying fallback models...');
+          for (const fallbackModel of CONFIG.fallbackModels) {
+            try {
+              console.log(`Attempting fallback model: ${fallbackModel}`);
+              return await chat(systemPrompt, userContent, fallbackModel);
+            } catch (fallbackError) {
+              console.error(`Fallback model ${fallbackModel} failed:`, fallbackError);
+            }
+          }
+        }
+        throw error;
+      }
+
+      // Wait before retry
+      await new Promise(resolve => setTimeout(resolve, CONFIG.retries.delayMs * attempt));
+    }
   }
 }
 

@@ -1,135 +1,365 @@
-/* General container for the popup */
-.wrapper {
-  width: 350px;
-  padding: 16px;
-  background-color: #f9fafb;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  color: #111827;
+/* Design System Variables (from Figma) */
+:root {
+  --color-primary: #ffbd6f;          /* Orange button color */
+  --color-primary-hover: #ffa847;    /* Darker orange for hover */
+  --color-secondary: #ff7a6e;        /* App primary red */
+  --color-background: #f9f9f9;       /* Light gray background */
+  --color-card: #ffffff;             /* White card background */
+  --color-text-primary: #1a232b;     /* Dark text */
+  --color-text-secondary: #666666;   /* Gray text */
+  --color-border: #ded8d0;           /* Light border */
+  --color-border-focus: #ffbd6f;     /* Orange focus border */
+  --color-input-bg: #fcfcfc;         /* Input background */
+  
+  /* Typography (Inter font family) */
+  --font-family: "Inter", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-size-h1: 24px;
+  --font-size-body: 14px;
+  --font-size-label: 13px;
+  --font-size-small: 11px;
+  
+  /* Spacing & Layout */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  
+  /* Shadows */
+  --shadow-card: 0px 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-button: 0px 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* Header section with title */
+/* Main Container */
+.wrapper {
+  width: 380px;
+  max-width: 380px;
+  min-width: 380px;
+  height: auto;
+  max-height: 580px;
+  background: var(--color-background);
+  font-family: var(--font-family);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
 .header {
-  margin-bottom: 16px;
+  background: var(--color-card);
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md);
+  text-align: center;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
 }
 
 .title {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: var(--font-size-h1);
+  font-weight: 700;
   margin: 0;
-  color: #1f2937;
+  color: var(--color-text-primary);
+  letter-spacing: -0.24px;
+  line-height: 1.3;
 }
 
-/* Section container */
+/* Content Area */
+.content {
+  background: var(--color-card);
+  padding: var(--spacing-lg);
+  flex: 1;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+/* Section */
 .section {
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-xl);
+}
+
+.section:last-child {
+  margin-bottom: var(--spacing-md);
 }
 
 .sectionTitle {
   display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #4b5563;
-  margin-bottom: 8px;
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.4;
 }
 
-/* Profile selector and buttons */
+/* Profile Actions */
 .profileActions {
   display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 16px;
+  gap: var(--spacing-sm);
+  align-items: stretch;
+  margin-bottom: var(--spacing-lg);
 }
 
 .profileSelector {
-  flex-grow: 1;
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background-color: #ffffff;
-  font-size: 1rem;
+  flex: 1;
+  min-width: 0; /* Allows flexbox to shrink */
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-input-bg);
+  font-size: var(--font-size-body);
+  font-family: var(--font-family);
+  color: var(--color-text-primary);
+  transition: border-color 0.2s ease;
 }
 
-/* Textarea for profile editing */
+.profileSelector:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 2px rgba(255, 189, 111, 0.1);
+}
+
+.profileSelector:disabled {
+  background-color: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+}
+
+/* Profile Editor */
 .profileEditor {
   width: 100%;
-  min-height: 150px;
-  padding: 8px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-family: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace;
-  font-size: 0.875rem;
+  min-height: 140px;
+  max-height: 200px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-input-bg);
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  font-size: 12px;
+  line-height: 1.4;
   resize: vertical;
-  box-sizing: border-box; /* Important for 100% width */
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
 }
 
-/* File upload button */
+.profileEditor:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 2px rgba(255, 189, 111, 0.1);
+}
+
+.profileEditor:disabled {
+  background-color: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.profileEditor::placeholder {
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* File Upload */
 .fileInput {
-  display: none; /* Hide the default input */
+  display: none;
 }
 
 .fileInputLabel {
   display: inline-block;
   cursor: pointer;
-  padding: 8px 12px;
-  background-color: #ffffff;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-card);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-label);
   font-weight: 500;
   text-align: center;
-  margin-top: 8px;
+  margin-top: var(--spacing-sm);
+  transition: all 0.2s ease;
+  user-select: none;
+  width: 100%;
+  box-sizing: border-box;
 }
+
 .fileInputLabel:hover {
-  background-color: #f3f4f6;
+  background-color: var(--color-background);
+  border-color: var(--color-border-focus);
 }
 
+.fileInputLabel.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 
-/* General button styles */
+/* Buttons */
 .button {
-  padding: 8px 12px;
+  padding: var(--spacing-sm) var(--spacing-md);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.4;
+  min-height: 36px;
+  box-shadow: var(--shadow-button);
+  white-space: nowrap;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
 }
 
 .buttonPrimary {
-  background-color: #2563eb;
-  color: white;
+  background-color: var(--color-primary);
+  color: var(--color-text-primary);
 }
-.buttonPrimary:hover {
-  background-color: #1d4ed8;
+
+.buttonPrimary:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .buttonSecondary {
-  background-color: #e5e7eb;
-  color: #374151;
+  background-color: var(--color-card);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  box-shadow: none;
 }
-.buttonSecondary:hover {
-  background-color: #d1d5db;
+
+.buttonSecondary:hover:not(:disabled) {
+  background-color: var(--color-background);
+  border-color: var(--color-border-focus);
 }
 
 .buttonDanger {
   background-color: #ef4444;
   color: white;
 }
-.buttonDanger:hover {
+
+.buttonDanger:hover:not(:disabled) {
   background-color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0px 2px 6px rgba(239, 68, 68, 0.3);
 }
 
-/* Footer section with the main action button */
+/* Compact buttons for profile actions */
+.button.compact {
+  padding: var(--spacing-sm) 10px;
+  font-size: var(--font-size-label);
+  min-height: 32px;
+  flex-shrink: 0;
+}
+
+/* Footer */
 .footer {
-  margin-top: 16px;
-  border-top: 1px solid #e5e7eb;
-  padding-top: 16px;
-  text-align: right;
+  background: var(--color-card);
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
 }
 
+.footer .button {
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  min-height: 44px;
+}
+
+/* Status */
 .status {
-  margin-top: 12px;
-  font-size: 0.875rem;
-  color: #6b7280;
+  margin-top: var(--spacing-md);
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
   text-align: center;
-  min-height: 1.25rem; /* Reserve space to prevent layout shift */
+  min-height: 14px;
+  line-height: 1.4;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Loading and success states */
+.status.loading {
+  color: var(--color-primary);
+  background-color: rgba(255, 189, 111, 0.1);
+}
+
+.status.success {
+  color: #22c55e;
+  background-color: rgba(34, 197, 94, 0.1);
+}
+
+.status.error {
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+/* Empty state styling */
+.status:empty {
+  display: none;
+}
+
+/* Scrollbar styling for content area */
+.content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}
+
+/* Responsive adjustments */
+@media (max-height: 600px) {
+  .wrapper {
+    max-height: 500px;
+  }
+  
+  .content {
+    max-height: 320px;
+  }
+  
+  .profileEditor {
+    min-height: 100px;
+    max-height: 140px;
+  }
+  
+  .section {
+    margin-bottom: var(--spacing-lg);
+  }
+}
+
+/* Focus management for better accessibility */
+.wrapper *:focus {
+  outline: none;
+}
+
+.wrapper input:focus,
+.wrapper select:focus,
+.wrapper textarea:focus,
+.wrapper button:focus {
+  box-shadow: 0 0 0 2px rgba(255, 189, 111, 0.3);
 } 

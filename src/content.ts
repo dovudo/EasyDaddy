@@ -117,9 +117,45 @@ function analyzeField(field: HTMLInputElement | HTMLTextAreaElement | HTMLSelect
     clues.push(...nearbyText.slice(0, 3)); // Limit to 3 most relevant
   }
   
-  // 7. Field type information
-  clues.push(`Type: ${field.type || field.tagName.toLowerCase()}`);
+  // 7. Field type information and special handling
+  const fieldType = field.type || field.tagName.toLowerCase();
+  clues.push(`Type: ${fieldType}`);
   if (field.required) clues.push('Required: true');
+  
+  // 8. Special handling for different input types
+  if (field.tagName.toLowerCase() === 'select') {
+    // For dropdowns, collect all available options
+    const select = field as HTMLSelectElement;
+    const options = Array.from(select.options)
+      .map(option => option.text.trim())
+      .filter(text => text.length > 0)
+      .slice(0, 10); // Limit to first 10 options to avoid overwhelming AI
+    
+    if (options.length > 0) {
+      clues.push(`Available options: [${options.map(opt => `"${opt}"`).join(', ')}]`);
+    }
+  } else if (fieldType === 'checkbox') {
+    clues.push('Type: checkbox (expects true/false)');
+    if ((field as HTMLInputElement).checked) {
+      clues.push('Currently checked: true');
+    }
+  } else if (fieldType === 'radio') {
+    clues.push('Type: radio button (expects true/false)');
+    // Find other radio buttons with the same name to show options
+    if (field.name) {
+      const radioGroup = document.querySelectorAll(`input[type="radio"][name="${field.name}"]`);
+      const radioOptions = Array.from(radioGroup)
+        .map(radio => {
+          const radioField = radio as HTMLInputElement;
+          return radioField.value || radioField.id || 'unknown';
+        })
+        .slice(0, 5);
+      
+      if (radioOptions.length > 1) {
+        clues.push(`Radio group options: [${radioOptions.map(opt => `"${opt}"`).join(', ')}]`);
+      }
+    }
+  }
   
   // Combine all clues into a descriptive string
   return clues.length > 0 ? clues.join('; ') : 'Unknown field';
@@ -155,19 +191,53 @@ function scanFields(): any[] {
 
 /**
  * Fills the form with the provided data and highlights the fields.
+ * Handles different input types appropriately.
  */
 function fillForm(data: Record<string, string>): void {
   for (const selector in data) {
-    const element = document.querySelector(selector) as HTMLInputElement;
+    const element = document.querySelector(selector) as HTMLInputElement | HTMLSelectElement;
     if (element) {
-      element.value = data[selector];
-      element.dispatchEvent(new Event('input', { bubbles: true }));
-
-      // Highlight the field
-      element.style.outline = '2px solid yellow';
-      setTimeout(() => {
-        element.style.outline = '';
-      }, 1000);
+      const value = data[selector];
+      let filled = false;
+      
+      // Handle different input types
+      if (element.tagName.toLowerCase() === 'select') {
+        // For dropdowns, find and select the matching option
+        const select = element as HTMLSelectElement;
+        for (let option of select.options) {
+          if (option.text.toLowerCase().includes(value.toLowerCase()) || 
+              option.value.toLowerCase().includes(value.toLowerCase())) {
+            select.selectedIndex = option.index;
+            filled = true;
+            break;
+          }
+        }
+      } else if (element.type === 'checkbox' || element.type === 'radio') {
+        // For checkboxes and radio buttons, set checked state
+        const inputElement = element as HTMLInputElement;
+        const shouldCheck = value.toLowerCase() === 'true' || 
+                           value.toLowerCase() === 'yes' || 
+                           value.toLowerCase() === '1' ||
+                           value.toLowerCase() === 'on';
+        inputElement.checked = shouldCheck;
+        filled = true;
+      } else {
+        // For regular text inputs, textareas, etc.
+        (element as HTMLInputElement).value = value;
+        filled = true;
+      }
+      
+      if (filled) {
+        // Trigger appropriate events
+        element.dispatchEvent(new Event('input', { bubbles: true }));
+        element.dispatchEvent(new Event('change', { bubbles: true }));
+        
+        // Highlight the field
+        element.style.outline = '2px solid yellow';
+        setTimeout(() => {
+          element.style.outline = '';
+        }, 1000);
+      }
     }
   }
 }
