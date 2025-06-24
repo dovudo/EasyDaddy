@@ -55,6 +55,10 @@ export const CONFIG = {
   debug: (import.meta as any).env.VITE_LLM_DEBUG === 'true',
 };
 
+console.log('[LLM CONFIG] apiKey:', CONFIG.apiKey);
+console.log('[LLM CONFIG] baseUrl:', CONFIG.baseUrl);
+console.log('[LLM CONFIG] model:', CONFIG.model);
+
 // Универсальный билдер конфига для chat()
 export const buildModelConfig = (): LLMConfig => {
   if (!CONFIG.apiKey) {

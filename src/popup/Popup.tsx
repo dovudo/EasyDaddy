@@ -150,11 +150,12 @@ const Popup: React.FC = () => {
     }
   };
   
-  const handleFillForms = () => {
+  const handleFillForms = async () => {
     if (!activeProfile) {
       alert('Please select a profile first.');
       return;
     }
+    const profileData = await getProfile(activeProfile);
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const activeTab = tabs[0];
       if (activeTab?.id) {
@@ -163,6 +164,7 @@ const Popup: React.FC = () => {
           {
             type: 'start_fill',
             profileId: activeProfile,
+            profile: profileData,
           },
           (response) => {
             if (chrome.runtime.lastError) {
