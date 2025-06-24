@@ -8,7 +8,6 @@ import {
   setActiveProfileId,
   initStorage,
 } from '../lib/storage';
-import styles from './Popup.module.css';
 
 // Type for profile data
 type ProfileData = Record<string, any>;
@@ -151,57 +150,51 @@ const Popup: React.FC = () => {
     }
   };
   
-  const handleFillForms = async () => {
+  const handleFillForms = () => {
     if (!activeProfile) {
       alert('Please select a profile first.');
       return;
     }
-    
-    setStatus('Getting profile data...');
-    const profileData = await getProfile(activeProfile);
-    if (!profileData) {
-      alert('Could not load profile data.');
-      setStatus('Error loading profile.');
-      return;
-    }
-
-    setStatus('Scanning page and filling forms...');
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const activeTab = tabs[0];
       if (activeTab?.id) {
-        chrome.tabs.sendMessage(activeTab.id, {
-          type: 'start_fill',
-          profile: profileData, // Pass the actual profile data
-        }, (response) => {
-          if (chrome.runtime.lastError) {
-            setStatus(`Error: ${chrome.runtime.lastError.message}`);
-          } else if (response?.success) {
-            setStatus('Forms filled successfully!');
-          } else {
-            setStatus('Failed to fill forms on the page.');
+        chrome.tabs.sendMessage(
+          activeTab.id,
+          {
+            type: 'start_fill',
+            profileId: activeProfile,
+          },
+          (response) => {
+            if (chrome.runtime.lastError) {
+              const msg = chrome.runtime.lastError.message || '';
+              if (msg.includes('Could not establish connection')) {
+                alert('Не удалось подключиться к странице. Пожалуйста, перезагрузите вкладку и попробуйте снова.');
+              } else {
+                alert('Произошла ошибка: ' + msg + '\nПопробуйте перезагрузить страницу и повторить попытку.');
+              }
+            }
+            // Можно обработать response, если нужно
           }
-        });
-      } else {
-        setStatus('Could not find active tab.');
+        );
       }
     });
   };
 
 
   return (
-    <div className={styles.wrapper}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>EasyDaddy</h1>
+    <div className="wrapper">
+      <header className="header">
+        <h1 className="title">EasyDaddy</h1>
       </header>
 
-      <div className={styles.content}>
-        <section className={styles.section}>
-          <label className={styles.sectionTitle}>Profile Management</label>
-          <div className={styles.profileActions}>
+      <div className="content">
+        <section className="section">
+          <label className="sectionTitle">Profile Management</label>
+          <div className="profileActions">
             <select
               value={activeProfile}
               onChange={(e) => handleSelectProfile(e.target.value)}
-              className={styles.profileSelector}
+              className="profileSelector"
               disabled={!profiles.length}
             >
               <option value="" disabled>
@@ -213,13 +206,13 @@ const Popup: React.FC = () => {
             </select>
             <button 
               onClick={handleCreateProfile} 
-              className={`${styles.button} ${styles.buttonSecondary} ${styles.compact}`}
+              className="button buttonSecondary buttonCompact"
             >
               New
             </button>
             <button 
               onClick={handleDeleteProfile} 
-              className={`${styles.button} ${styles.buttonDanger} ${styles.compact}`} 
+              className="button buttonDanger buttonCompact" 
               disabled={!activeProfile}
             >
               Delete
@@ -227,13 +220,13 @@ const Popup: React.FC = () => {
           </div>
         </section>
 
-        <section className={styles.section}>
-          <label htmlFor="profile-editor" className={styles.sectionTitle}>
+        <section className="section">
+          <label htmlFor="profile-editor" className="sectionTitle">
             Profile Data
           </label>
           <textarea
             id="profile-editor"
-            className={styles.profileEditor}
+            className="profileEditor"
             value={profileDataText}
             onChange={(e) => handleTextChange(e.target.value)}
             disabled={!activeProfile}
@@ -244,34 +237,34 @@ const Popup: React.FC = () => {
             type="file"
             id="file-upload"
             ref={fileInputRef}
-            className={styles.fileInput}
+            className="fileInput"
             onChange={handleFileChange}
             accept=".txt,.md,.pdf"
             disabled={!activeProfile}
           />
           <label 
             htmlFor="file-upload" 
-            className={`${styles.fileInputLabel} ${!activeProfile ? styles.disabled : ''}`}
+            className={`${!activeProfile ? 'disabled' : ''} fileInputLabel`}
           >
             📄 Upload & Parse Document
           </label>
         </section>
 
         {status && (
-          <div className={`${styles.status} ${
-            status.includes('Error') ? styles.error : 
-            status.includes('successfully') || status.includes('filled') ? styles.success :
-            status.includes('...') ? styles.loading : ''
+          <div className={`status ${
+            status.includes('Error') ? 'error' : 
+            status.includes('successfully') || status.includes('filled') ? 'success' :
+            status.includes('...') ? 'loading' : ''
           }`}>
             {status}
           </div>
         )}
       </div>
       
-      <footer className={styles.footer}>
+      <footer className="footer">
         <button 
           onClick={handleFillForms} 
-          className={`${styles.button} ${styles.buttonPrimary}`} 
+          className="button buttonPrimary" 
           disabled={!activeProfile}
         >
           🚀 Fill Out Forms on Page
