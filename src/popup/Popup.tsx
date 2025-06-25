@@ -8,6 +8,10 @@ import {
   setActiveProfileId,
   initStorage,
 } from '../lib/storage';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Card, CardContent } from '../components/ui/card';
 
 // Type for profile data
 type ProfileData = Record<string, any>;
@@ -185,93 +189,98 @@ const Popup: React.FC = () => {
 
   return (
     <div className="wrapper">
-      <header className="header">
-        <h1 className="title">EasyDaddy</h1>
-      </header>
+      <Card className="bg-[#f9f9f9] border border-solid border-[#d9cfcf] w-[500px] mx-auto mt-4">
+        <CardContent>
+          <header className="header">
+            <h1 className="title text-center text-2xl font-bold mb-4">EasyDaddy</h1>
+          </header>
 
-      <div className="content">
-        <section className="section">
-          <label className="sectionTitle">Profile Management</label>
-          <div className="profileActions">
-            <select
-              value={activeProfile}
-              onChange={(e) => handleSelectProfile(e.target.value)}
-              className="profileSelector"
-              disabled={!profiles.length}
-            >
-              <option value="" disabled>
-                {profiles.length ? 'Select a profile' : 'No profiles'}
-              </option>
-              {profiles.map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
-            <button 
-              onClick={handleCreateProfile} 
-              className="button buttonSecondary buttonCompact"
-            >
-              New
-            </button>
-            <button 
-              onClick={handleDeleteProfile} 
-              className="button buttonDanger buttonCompact" 
+          <div className="content">
+            <section className="section mb-4">
+              <Label className="sectionTitle block mb-2">Profile Management</Label>
+              <div className="profileActions flex gap-2 mb-2">
+                <select
+                  value={activeProfile}
+                  onChange={(e) => handleSelectProfile(e.target.value)}
+                  className="profileSelector border rounded px-2 py-1"
+                  disabled={!profiles.length}
+                >
+                  <option value="" disabled>
+                    {profiles.length ? 'Select a profile' : 'No profiles'}
+                  </option>
+                  {profiles.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+                <Button 
+                  onClick={handleCreateProfile} 
+                  variant="secondary"
+                  className="button buttonSecondary buttonCompact"
+                >
+                  New
+                </Button>
+                <Button 
+                  onClick={handleDeleteProfile} 
+                  variant="destructive"
+                  className="button buttonDanger buttonCompact" 
+                  disabled={!activeProfile}
+                >
+                  Delete
+                </Button>
+              </div>
+            </section>
+
+            <section className="section mb-4">
+              <Label htmlFor="profile-editor" className="sectionTitle block mb-2">
+                Profile Data
+              </Label>
+              <Input
+                asChild
+                id="profile-editor"
+                className="profileEditor w-full mb-2"
+                value={profileDataText}
+                onChange={(e: any) => handleTextChange(e.target.value)}
+                disabled={!activeProfile}
+                placeholder={activeProfile ? "Your profile data will appear here..." : status}
+              />
+              <input
+                type="file"
+                id="file-upload"
+                ref={fileInputRef}
+                className="fileInput mb-2"
+                onChange={handleFileChange}
+                accept=".txt,.md,.pdf"
+                disabled={!activeProfile}
+              />
+              <Label 
+                htmlFor="file-upload" 
+                className={`${!activeProfile ? 'disabled' : ''} fileInputLabel block cursor-pointer`}
+              >
+                📄 Upload & Parse Document
+              </Label>
+            </section>
+
+            {status && (
+              <div className={`status ${
+                status.includes('Error') ? 'error' : 
+                status.includes('successfully') || status.includes('filled') ? 'success' :
+                status.includes('...') ? 'loading' : ''
+              }`}>
+                {status}
+              </div>
+            )}
+          </div>
+          <footer className="footer mt-4 flex justify-center">
+            <Button 
+              onClick={handleFillForms} 
+              className="button buttonPrimary w-full" 
               disabled={!activeProfile}
             >
-              Delete
-            </button>
-          </div>
-        </section>
-
-        <section className="section">
-          <label htmlFor="profile-editor" className="sectionTitle">
-            Profile Data
-          </label>
-          <textarea
-            id="profile-editor"
-            className="profileEditor"
-            value={profileDataText}
-            onChange={(e) => handleTextChange(e.target.value)}
-            disabled={!activeProfile}
-            placeholder={activeProfile ? "Your profile data will appear here..." : status}
-          />
-          
-          <input
-            type="file"
-            id="file-upload"
-            ref={fileInputRef}
-            className="fileInput"
-            onChange={handleFileChange}
-            accept=".txt,.md,.pdf"
-            disabled={!activeProfile}
-          />
-          <label 
-            htmlFor="file-upload" 
-            className={`${!activeProfile ? 'disabled' : ''} fileInputLabel`}
-          >
-            📄 Upload & Parse Document
-          </label>
-        </section>
-
-        {status && (
-          <div className={`status ${
-            status.includes('Error') ? 'error' : 
-            status.includes('successfully') || status.includes('filled') ? 'success' :
-            status.includes('...') ? 'loading' : ''
-          }`}>
-            {status}
-          </div>
-        )}
-      </div>
-      
-      <footer className="footer">
-        <button 
-          onClick={handleFillForms} 
-          className="button buttonPrimary" 
-          disabled={!activeProfile}
-        >
-          🚀 Fill Out Forms on Page
-        </button>
-      </footer>
+              🚀 Fill Out Forms on Page
+            </Button>
+          </footer>
+        </CardContent>
+      </Card>
     </div>
   );
 };

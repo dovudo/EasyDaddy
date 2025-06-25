@@ -1,6 +1,6 @@
 # EasyDaddy – Smart Autofill Chrome Extension
 
-> ⚡ Save hours on repetitive form-filling. EasyDaddy uses LLMs to understand the web page you’re on and fills out the right information from your personal or project profiles – even complex answers like motivation letters or pitch descriptions.
+> ⚡ Save hours on repetitive form-filling. EasyDaddy uses LLMs to understand the web page you're on and fills out the right information from your personal or project profiles – even complex answers like motivation letters or pitch descriptions.
 
 ---
 
@@ -11,7 +11,7 @@
 | **Multiple Profiles** | Switch between Personal, Startup, Freelance CV, etc. |
 | **Intelligent Autofill** | ChatGPT analyses page context & maps your data to each field. |
 | **File Import** | Drop `.txt`, `.pdf`, `.md` with your CV / project brief – EasyDaddy extracts structured data automatically. |
-| **Local-first Storage** | All profiles are kept in your browser’s IndexedDB (AES-GCM encrypted). |
+| **Local-first Storage** | All profiles are kept in your browser's IndexedDB (AES-GCM encrypted). |
 | **One-click "Fill Out"** | Hit the button in the popup – forms are scanned and populated instantly. |
 | **Highlight & Edit** | Newly filled fields flash yellow for 1 s so you can review / tweak. |
 
@@ -119,7 +119,15 @@ Feel free to open issues for feature requests, bugs, or questions.
 
 ---
 
-## 📜 License
+## 📄 License
+
+This project is licensed under the **Business Source License 1.1 (BUSL-1.1)**.
+
+- **Non-commercial use only:** You may use, modify, and distribute this code for non-commercial purposes.
+- **Commercial use:** For commercial use (including SaaS, paid products, or integration into commercial offerings), a separate commercial license is required. Please contact **dovjobs@gmail.com** to discuss licensing options.
+- **Change Date:** On 2027-06-01, this project will automatically be relicensed under the Apache License 2.0.
+
+See the [LICENSE](./LICENSE) file for full terms.
 
 ```
 MIT © 2025 YOUR_NAME_OR_COMPANY
