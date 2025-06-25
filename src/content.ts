@@ -260,6 +260,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         type: 'autofill',
         context: pageContext,
         profile: message.profile,
+        instructions: message.instructions,
       });
 
       // --- CRITICAL LOGGING ---
