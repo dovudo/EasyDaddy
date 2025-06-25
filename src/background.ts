@@ -313,12 +313,14 @@ Do NOT add any other keys except the selectors listed above. If you do not have 
 You will receive:
 1. PAGE_CONTEXT: contains URL, title, and an array of form fields with descriptions
 2. USER_PROFILE: a structured user profile
+3. INSTRUCTIONS: optional user hints that override the profile for this session
 
-Your task:
-- For each form field, analyze its description and find the most appropriate data in USER_PROFILE
-- Return ONLY a JSON object where keys are selectors from the list above and values are the appropriate data
-- Do NOT add any other keys
-- If there is no suitable data, do not include the selector in the response
+- Your task:
+  - For each form field, analyze its description and find the most appropriate data in USER_PROFILE
+  - Return ONLY a JSON object where keys are selectors from the list above and values are the appropriate data
+  - Do NOT add any other keys
+  - If there is no suitable data, do not include the selector in the response
+  - If INSTRUCTIONS contradict the profile, follow INSTRUCTIONS
 
 Example response:
 {
@@ -332,6 +334,7 @@ PAGE_CONTEXT and USER_PROFILE:
       const promptContext = {
         PAGE_CONTEXT: context,
         USER_PROFILE: profile,
+        INSTRUCTIONS: message.instructions || ''
       };
       try {
         const userContentString = JSON.stringify(promptContext, null, 2);

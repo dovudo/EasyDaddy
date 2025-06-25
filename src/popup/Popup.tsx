@@ -9,9 +9,9 @@ import {
   initStorage,
 } from '../lib/storage';
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent } from '../components/ui/card';
+import { Checkbox } from '../components/ui/checkbox';
 
 // Type for profile data
 type ProfileData = Record<string, any>;
@@ -20,6 +20,9 @@ const Popup: React.FC = () => {
   const [profiles, setProfiles] = useState<string[]>([]);
   const [activeProfile, setActiveProfile] = useState<string>('');
   const [profileDataText, setProfileDataText] = useState('');
+  const [showProfileData, setShowProfileData] = useState(false);
+  const [instructions, setInstructions] = useState('');
+  const [sendOnce, setSendOnce] = useState(false);
   const [status, setStatus] = useState('Initializing...');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -169,6 +172,7 @@ const Popup: React.FC = () => {
             type: 'start_fill',
             profileId: activeProfile,
             profile: profileData,
+            instructions,
           },
           (response) => {
             if (chrome.runtime.lastError) {
@@ -184,6 +188,11 @@ const Popup: React.FC = () => {
         );
       }
     });
+
+    if (sendOnce) {
+      setInstructions('');
+      setSendOnce(false);
+    }
   };
 
 
@@ -231,18 +240,33 @@ const Popup: React.FC = () => {
             </section>
 
             <section className="section mb-4">
-              <Label htmlFor="profile-editor" className="sectionTitle block mb-2">
-                Profile Data
-              </Label>
-              <Input
-                asChild
-                id="profile-editor"
-                className="profileEditor w-full mb-2"
-                value={profileDataText}
-                onChange={(e: any) => handleTextChange(e.target.value)}
-                disabled={!activeProfile}
-                placeholder={activeProfile ? "Your profile data will appear here..." : status}
-              />
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="profile-editor" className="sectionTitle">
+                  Profile Data
+                </Label>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowProfileData(!showProfileData)}
+                  disabled={!activeProfile}
+                >
+                  {showProfileData ? 'Hide' : 'Show'}
+                </Button>
+              </div>
+              {showProfileData && (
+                <textarea
+                  id="profile-editor"
+                  className="profileEditor w-full mb-2"
+                  value={profileDataText}
+                  onChange={(e: any) => handleTextChange(e.target.value)}
+                  disabled={!activeProfile}
+                  placeholder={
+                    activeProfile
+                      ? 'Your profile data will appear here...'
+                      : status
+                  }
+                />
+              )}
               <input
                 type="file"
                 id="file-upload"
@@ -252,12 +276,33 @@ const Popup: React.FC = () => {
                 accept=".txt,.md,.pdf"
                 disabled={!activeProfile}
               />
-              <Label 
-                htmlFor="file-upload" 
+              <Label
+                htmlFor="file-upload"
                 className={`${!activeProfile ? 'disabled' : ''} fileInputLabel block cursor-pointer`}
               >
                 📄 Upload & Parse Document
               </Label>
+            </section>
+
+            <section className="section mb-4">
+              <Label htmlFor="instructions" className="sectionTitle block mb-2">
+                Additional Instructions
+              </Label>
+              <textarea
+                id="instructions"
+                className="profileEditor w-full mb-2"
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+                placeholder="Add any temporary instructions for this fill session..."
+              />
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="send-once"
+                  checked={sendOnce}
+                  onCheckedChange={(v) => setSendOnce(!!v)}
+                />
+                <Label htmlFor="send-once">Send once</Label>
+              </div>
             </section>
 
             {status && (
