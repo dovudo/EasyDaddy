@@ -242,41 +242,94 @@ function fillForm(data: Record<string, string>): void {
   }
 }
 
+// Import browser compatibility layer
+declare const browserAPI: any;
+
+// Inject browser-compat module into content script
+if (typeof window !== 'undefined' && !window.browserAPI) {
+  // For content scripts, we need to create a minimal version since we can't import ES modules directly
+  const isChrome = typeof chrome !== 'undefined' && !!chrome.runtime;
+  const isFirefox = typeof browser !== 'undefined' && !!browser.runtime;
+  const api = isFirefox ? browser : chrome;
+  
+  // Simple browser detection
+  let browserName = 'Chrome';
+  if (navigator.userAgent.includes('Arc/')) browserName = 'Arc';
+  else if (navigator.userAgent.includes('Edg/')) browserName = 'Edge';
+  else if (navigator.userAgent.includes('Firefox/')) browserName = 'Firefox';
+  
+  window.browserAPI = {
+    name: browserName,
+    runtime: {
+      sendMessage: (message: any): Promise<any> => {
+        return new Promise((resolve, reject) => {
+          try {
+            if (isFirefox) {
+              api.runtime.sendMessage(message).then(resolve).catch(reject);
+            } else {
+              api.runtime.sendMessage(message, (response: any) => {
+                if (api.runtime.lastError) {
+                  reject(new Error(api.runtime.lastError.message));
+                } else {
+                  resolve(response);
+                }
+              });
+            }
+          } catch (error) {
+            reject(error);
+          }
+        });
+      },
+      onMessage: {
+        addListener: (callback: any) => api.runtime.onMessage.addListener(callback)
+      }
+    }
+  };
+}
+
 /**
  * Main message listener for the content script.
  */
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+window.browserAPI?.runtime.onMessage.addListener((message: any, sender: any, sendResponse: any) => {
   if (message.type === 'start_fill') {
     (async () => {
-      console.log('EasyDaddy: Scanning page for forms...');
+      console.log(`[EasyDaddy] Scanning page for forms (${window.browserAPI?.name || 'unknown'})...`);
       const pageContext = {
         url: location.href,
         title: document.title,
         fields: scanFields(),
       };
 
-      console.log('EasyDaddy: Asking AI for autofill data...');
-      const fillData = await chrome.runtime.sendMessage({
-        type: 'autofill',
-        context: pageContext,
-        profile: message.profile,
-        instructions: message.instructions,
-      });
+      console.log('[EasyDaddy] Asking AI for autofill data...');
+      try {
+        const fillData = await window.browserAPI.runtime.sendMessage({
+          type: 'autofill',
+          context: pageContext,
+          profile: message.profile,
+          instructions: message.instructions,
+        });
 
-      // --- CRITICAL LOGGING ---
-      console.log('EasyDaddy: Received data from AI to fill:', fillData);
+        // --- CRITICAL LOGGING ---
+        console.log('[EasyDaddy] Received data from AI to fill:', fillData);
 
-      if (fillData && Object.keys(fillData).length > 0) {
-        console.log('EasyDaddy: Filling form...');
-        fillForm(fillData);
-      } else {
-        console.log('EasyDaddy: AI returned no data to fill, stopping.');
+        if (fillData && !fillData.error && Object.keys(fillData).length > 0) {
+          console.log('[EasyDaddy] Filling form...');
+          fillForm(fillData);
+          sendResponse({ success: true, fieldsFound: pageContext.fields.length, fieldsFilled: Object.keys(fillData).length });
+        } else if (fillData?.error) {
+          console.error('[EasyDaddy] AI returned error:', fillData.error);
+          sendResponse({ success: false, error: fillData.error });
+        } else {
+          console.log('[EasyDaddy] AI returned no data to fill, stopping.');
+          sendResponse({ success: true, fieldsFound: pageContext.fields.length, fieldsFilled: 0 });
+        }
+      } catch (error) {
+        console.error('[EasyDaddy] Error during form filling:', error);
+        sendResponse({ success: false, error: error.message });
       }
-      
-      sendResponse({ success: true });
     })();
     return true; // Indicates async response
   }
 });
 
-console.log('EasyDaddy content script loaded and ready.');
+console.log(`[EasyDaddy] Content script loaded and ready (${window.browserAPI?.name || 'unknown'}).`);

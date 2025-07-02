@@ -1,10 +1,19 @@
 /* General container for the popup */
 .wrapper {
-  width: 350px;
-  padding: 16px;
-  background-color: #f9fafb;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  color: #111827;
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  padding: 0px 0px 0px 0px;
+}
+
+html, body {
+  width: 350px !important;
+  min-width: 350px !important;
+  max-width: 350px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  overflow-x: hidden !important;
 }
 
 /* Header section with title */
@@ -123,4 +132,18 @@
   border-top: 1px solid #e5e7eb;
   padding-top: 16px;
   text-align: right;
+}
+
+.checkbox-row {
+  min-height: 24px;
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+.radix-checkbox {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  cursor: pointer;
 } 

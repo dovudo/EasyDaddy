@@ -17,6 +17,7 @@ import {
   CONFIG,
   buildModelConfig
 } from './lib/llm-config.js';
+import { browserAPI } from './lib/browser-compat.js';
 
 // Comprehensive, extensible profile schema
 const PROFILE_SCHEMA = {
@@ -277,8 +278,8 @@ async function chat(systemPrompt: string, userContent: string, modelName?: strin
   }
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('Message received in background:', message);
+browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log(`[EasyDaddy] Message received in background (${browserAPI.name}):`, message);
 
   if (message.type === 'extract_profile') {
     (async () => {

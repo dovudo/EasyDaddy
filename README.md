@@ -129,6 +129,45 @@ This project is licensed under the **Business Source License 1.1 (BUSL-1.1)**.
 
 See the [LICENSE](./LICENSE) file for full terms.
 
+## 🌐 Supported Browsers & Compatibility Goals
+
+EasyDaddy is designed for **maximum cross-browser compatibility**. The extension aims to work seamlessly in:
+
+- **Google Chrome** (latest and LTS)
+- **Arc Browser**
+- **Microsoft Edge** (Chromium-based)
+- **Mozilla Firefox** (WebExtensions API)
+- **Opera** (Chromium-based)
+- **Apple Safari** (Safari 11+, via WebExtensions API)
+
+**Safari Support:**
+- Targeting Safari 11 and above (macOS High Sierra+)
+- Uses WebExtensions API for unified codebase
+- Special attention to Manifest V3 and Safari-specific limitations
+- Regular testing in Safari Technology Preview
+
+> **Goal:** Deliver a single extension codebase that works across all major browsers, including Safari, with minimal browser-specific code and maximum maintainability.
+
+## 🍏 Safari Support & Known Issues
+
+### Установка в Safari
+
+1. Откройте Xcode (или Safari Extension Converter)
+2. Импортируйте папку расширения как WebExtension Project
+3. Соберите и установите расширение в Safari (следуйте инструкциям Xcode)
+4. Включите расширение в настройках Safari (Preferences → Extensions)
+
+### Известные ограничения Safari
+
+- Не все Chrome/Firefox API поддерживаются (особенно chrome.scripting, chrome.action)
+- CSP может блокировать некоторые динамические скрипты (eval, dynamic import)
+- Ограничения на работу background/service worker
+- Возможны отличия в работе storage и messaging
+- Нет поддержки некоторых экспериментальных API
+- Возможны проблемы с PDF-парсингом (pdfjs-dist)
+
+> Если расширение не работает в Safari, проверьте консоль на ошибки и убедитесь, что все разрешения указаны в manifest.json.
+
 ```
 MIT © 2025 YOUR_NAME_OR_COMPANY
 ```

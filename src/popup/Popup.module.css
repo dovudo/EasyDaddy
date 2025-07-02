@@ -36,9 +36,9 @@
 
 /* Main Container */
 .wrapper {
-  width: 380px;
-  max-width: 380px;
-  min-width: 380px;
+  width: 350px;
+  max-width: 350px;
+  min-width: 350px;
   height: auto;
   max-height: 580px;
   background: var(--color-background);
