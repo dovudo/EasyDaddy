@@ -54,7 +54,8 @@ const Popup: React.FC = () => {
     // In tab: window.location.protocol === 'http:' or 'https:'
     const isRealPopup = window.location.protocol.startsWith('chrome-extension');
     setIsPopup(isRealPopup);
-    if (!isRealPopup) return; // Don't load data if not popup
+    
+    // Load data regardless of popup vs tab mode (Arc, Safari iOS support)
     async function loadData() {
       try {
         // Log browser detection
@@ -279,15 +280,16 @@ const Popup: React.FC = () => {
             )}
           </header>
 
-          {!isPopup ? (
-            <div className="bg-yellow-50 border border-yellow-300 rounded p-4 text-center mt-4">
-              <div className="text-lg font-bold mb-2">⚠️ Расширение открыто не как popup!</div>
-              <div className="mb-2">Arc иногда открывает расширения в отдельной вкладке или окне.<br/>В этом режиме кнопки не работают.</div>
-              <div className="mb-2">Пожалуйста, откройте расширение через иконку <b>EasyDaddy</b> в панели браузера.</div>
-              <div className="text-xs text-gray-500">URL: {window.location.href}</div>
+          {!isPopup && (
+            <div className="bg-blue-50 border border-blue-300 rounded p-4 text-center mb-4">
+              <div className="text-lg font-bold mb-2">📱 Tab Mode</div>
+              <div className="mb-2">Расширение открыто в режиме вкладки (Arc, Safari iOS).<br/>Это нормально - все функции доступны!</div>
+              <div className="text-xs text-gray-500">Mode: {isPopup ? 'Popup' : 'Tab'} | URL: {window.location.protocol}</div>
             </div>
-          ) : (
-            <div className="content">
+          )}
+          
+                     {/* Main UI - now works in both popup and tab modes */}
+           <div className="content">
               <section className="section mb-4">
                 <Label className="sectionTitle block mb-2">Profile Management</Label>
                 <div className="profileActions flex gap-2 mb-2">
@@ -471,7 +473,6 @@ const Popup: React.FC = () => {
                 </div>
               )}
             </div>
-          )}
           <footer className="footer mt-4 flex justify-center">
             <Button 
               onClick={handleFillForms} 
