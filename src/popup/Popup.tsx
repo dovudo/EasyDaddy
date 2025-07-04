@@ -13,6 +13,10 @@ import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
 import { Card, CardContent } from '../components/ui/card';
 import { Checkbox } from '../components/ui/checkbox';
+import { makeBus } from '@davestewart/extension-bus';
+import type { ProfileSiteData } from '../lib/types';
+const logo = '/logo.png';
+const loadingIcon = '/loading_icon.png';
 
 // Type for profile data
 type ProfileData = Record<string, any>;
@@ -29,6 +33,19 @@ const Popup: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPopup, setIsPopup] = useState(true);
   const [isSafari, setIsSafari] = useState(false);
+  const [sitesData, setSitesData] = useState<ProfileSiteData[]>([]);
+  const [showSitesData, setShowSitesData] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Create Extension Bus for popup
+  const bus = makeBus('popup', {
+    target: 'background',
+    handlers: {
+      ping() {
+        return { status: 'popup alive' };
+      }
+    }
+  });
 
   // Initial load
   useEffect(() => {
@@ -81,6 +98,7 @@ const Popup: React.FC = () => {
     if (!id) {
       setActiveProfile('');
       setProfileDataText('');
+      setSitesData([]);
       setStatus('Select a profile or create a new one.');
       return;
     }
@@ -89,6 +107,11 @@ const Popup: React.FC = () => {
     await setActiveProfileId(id);
     const data = await getProfile(id);
     setProfileDataText(JSON.stringify(data || {}, null, 2));
+    
+    // Load sites data
+    const sites = data?.sites || [];
+    setSitesData(sites);
+    
     setStatus(`Profile "${id}" loaded.`);
   };
 
@@ -188,12 +211,11 @@ const Popup: React.FC = () => {
       alert('Please select a profile first.');
       return;
     }
-    
+    setIsLoading(true);
     try {
       const profileData = await getProfile(activeProfile);
       const tabs = await browserAPI.tabs.query({ active: true, currentWindow: true });
       const activeTab = tabs[0];
-      
       if (activeTab?.id) {
         const response = await browserAPI.tabs.sendMessage(
           activeTab.id,
@@ -204,30 +226,41 @@ const Popup: React.FC = () => {
             instructions,
           }
         );
-        
-        // Handle connection errors
         if (response?.noConnection) {
           alert(handleBrowserError(new Error(response.error), 'tab communication'));
         }
       } else {
         alert('Не удалось найти активную вкладку. Убедитесь, что вкладка открыта и активна.');
       }
-
       if (sendOnce) {
         setInstructions('');
         setSendOnce(false);
       }
     } catch (error) {
       alert(handleBrowserError(error, 'form filling'));
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // Test Extension Bus connection
+  const testBusConnection = async () => {
+    try {
+      const result = await bus.call('ping');
+      console.log('[EasyDaddy Popup] Bus connection test:', result);
+      setStatus(`Bus connected: ${result?.status || 'OK'}`);
+    } catch (error) {
+      console.error('[EasyDaddy Popup] Bus connection error:', error);
+      setStatus('Bus connection failed');
+    }
+  };
 
   return (
     <div className="wrapper">
       <Card className="bg-[#f9f9f9] border border-solid border-[#d9cfcf] mx-auto mt-4">
         <CardContent>
           <header className="header">
+            <img src={logo} alt="EasyDaddy Logo" style={{ height: 48, margin: '0 auto 8px', display: 'block' }} />
             <h1 className="title text-center text-2xl font-bold mb-2">EasyDaddy</h1>
             {browserInfo && (
               <div className="text-center text-sm text-gray-600 mb-4">
@@ -356,6 +389,67 @@ const Popup: React.FC = () => {
                 </div>
               </section>
 
+              <section className="section mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="sectionTitle">
+                    Saved Site Data ({sitesData.length})
+                  </Label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setShowSitesData(!showSitesData)}
+                      disabled={!activeProfile || sitesData.length === 0}
+                    >
+                      {showSitesData ? 'Hide' : 'Show'}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={testBusConnection}
+                      title="Test Extension Bus connection"
+                    >
+                      🔌
+                    </Button>
+                  </div>
+                </div>
+                
+                {showSitesData && sitesData.length > 0 && (
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {sitesData.map((site, index) => (
+                      <div key={index} className="bg-gray-50 p-3 rounded border text-sm">
+                        <div className="font-medium text-blue-600 mb-1">
+                          {site.domain}
+                        </div>
+                        <div className="text-xs text-gray-500 mb-2">
+                          Last used: {site.lastUsed ? new Date(site.lastUsed).toLocaleDateString() : 'Never'} 
+                          {site.useCount ? ` (${site.useCount} times)` : ''}
+                        </div>
+                        <div className="grid grid-cols-2 gap-1 text-xs">
+                          {Object.entries(site.fields).slice(0, 6).map(([key, value]) => (
+                            <div key={key} className="truncate">
+                              <span className="text-gray-600">{key}:</span> 
+                              <span className="ml-1 font-mono">{String(value).substring(0, 20)}...</span>
+                            </div>
+                          ))}
+                          {Object.keys(site.fields).length > 6 && (
+                            <div className="text-gray-400 col-span-2">
+                              +{Object.keys(site.fields).length - 6} more fields...
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {showSitesData && sitesData.length === 0 && (
+                  <div className="text-center text-gray-500 text-sm py-4">
+                    No site data saved yet. Fill out forms on websites to automatically save data to your profile.
+                  </div>
+                )}
+              </section>
+
               {status && (
                 <div className={`status ${
                   status.includes('Error') || status.includes('ошибка') ? 'error' : 
@@ -382,9 +476,11 @@ const Popup: React.FC = () => {
             <Button 
               onClick={handleFillForms} 
               className="button buttonPrimary w-full" 
-              disabled={!activeProfile}
+              disabled={!activeProfile || isLoading}
             >
-              🚀 Fill Out Forms on Page
+              {isLoading ? (
+                <img src={loadingIcon} alt="Loading..." style={{ height: 24, marginRight: 8 }} />
+              ) : '🚀'} Fill Out Forms on Page
             </Button>
           </footer>
 

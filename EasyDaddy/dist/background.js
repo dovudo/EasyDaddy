@@ -1,28 +1,41 @@
-// BG SCRIPT VERSION: 1
-console.log('BG SCRIPT VERSION: 1');
-// EasyDaddy Extension - Background Script
-// 
-// LLM Integration via OpenRouter API with configurable models
-// 
-// Configuration is now managed in src/lib/llm-config.ts
-// To switch models: Update CONFIG.activeModel in llm-config.ts
-// To add new models: Add them to MODELS in llm-config.ts
-//
-// Environment Variables Required:
-// - VITE_OPENROUTER_API_KEY: Your OpenRouter API key (preferred)
-// - VITE_OPENAI_API_KEY: For direct OpenAI API calls
-
-import { 
-  LLMConfig,
-  CONFIG,
-  buildModelConfig
-} from './lib/llm-config.js';
-import { browserAPI } from './lib/browser-compat.js';
-import { makeBus, type Handlers } from '@davestewart/extension-bus';
-import type { FormSubmissionData, ProfileSiteData, AutoSaveResponse } from './lib/types';
-import { getActiveProfileId, getProfile, saveProfile } from './lib/storage';
-
-// Comprehensive, extensible profile schema
+import { f as browserAPI, b as getActiveProfileId, c as getProfile, d as saveProfile } from "./assets/browser-compat-52inOtKV.js";
+import { m as makeBus } from "./assets/index-CJ6fAO0g.js";
+const CONFIG = {
+  // ID модели (например, deepseek/deepseek-r1-0528, openai/gpt-4o, anthropic/claude-3-haiku и т.д.)
+  model: "google/gemini-2.5-flash-lite-preview-06-17",
+  // Базовый URL API (по умолчанию OpenRouter)
+  baseUrl: "https://openrouter.ai/api/v1",
+  // API ключ (OpenRouter или OpenAI)
+  apiKey: "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",
+  // Для рейтинга на openrouter (опционально)
+  siteUrl: "https://easydaddy.extension",
+  siteName: "EasyDaddy Extension",
+  // Поддержка structured JSON (можно вынести в env при необходимости)
+  supportsJsonMode: true,
+  // Параметры генерации
+  temperature: Number(void 0) || 0.7,
+  maxTokens: Number(void 0) || 4096
+};
+console.log("[LLM CONFIG] apiKey:", CONFIG.apiKey);
+console.log("[LLM CONFIG] baseUrl:", CONFIG.baseUrl);
+console.log("[LLM CONFIG] model:", CONFIG.model);
+const buildModelConfig = () => {
+  return {
+    apiKey: CONFIG.apiKey,
+    baseUrl: CONFIG.baseUrl,
+    model: CONFIG.model,
+    siteUrl: CONFIG.siteUrl,
+    siteName: CONFIG.siteName,
+    supportsJsonMode: CONFIG.supportsJsonMode,
+    maxTokens: CONFIG.maxTokens,
+    temperature: CONFIG.temperature,
+    headers: {
+      ...{ "HTTP-Referer": CONFIG.siteUrl },
+      ...{ "X-Title": CONFIG.siteName }
+    }
+  };
+};
+console.log("BG SCRIPT VERSION: 1");
 const PROFILE_SCHEMA = {
   "personal": {
     "firstName": "...",
@@ -130,7 +143,6 @@ const PROFILE_SCHEMA = {
     "coverLetter": "..."
   }
 };
-
 const EXTRACT_PROFILE_PROMPT = `You are DataExtractor_v2, an expert at extracting structured information from various types of documents.
 
 You will receive raw text from documents such as:
@@ -159,153 +171,71 @@ Return ONLY a valid JSON object following this exact schema structure. Do not in
 RAW TEXT:
 ---
 `;
-
-const AUTOFILL_PROMPT = `You are FormAutoFiller_v2, an expert at understanding web forms and filling them intelligently using comprehensive user profiles.
-
-You will receive:
-1. PAGE_CONTEXT: Contains URL, title, and an array of form fields with rich descriptions
-2. USER_PROFILE: A comprehensive profile with categorized information
-
-Your task:
-1. Analyze each field's description to understand what type of information it needs
-2. Navigate the appropriate section(s) of USER_PROFILE to find matching data
-3. Return ONLY a valid JSON object with CSS selectors as keys and appropriate values
-
-FIELD TYPE HANDLING:
-
-**TEXT INPUTS** (Type: text, email, tel, etc.):
-- Return the actual text value to fill in
-
-**DROPDOWNS** (Type: select):
-- Look for "Available options: [...]" in the description
-- Return the EXACT option text that best matches the user's data
-- If no exact match, choose the closest option from the available list
-- Common mappings: "Bachelor's Degree", "Master's Degree", "Yes", "No", etc.
-
-**CHECKBOXES** (Type: checkbox):
-- Return "true" to check the box, "false" to uncheck
-- Base decision on user data relevance (e.g., "Do you have experience with Java?" → "true" if Java is in skills)
-
-**RADIO BUTTONS** (Type: radio button):
-- Return "true" for the option that should be selected
-- Only one radio button in a group should get "true", others get "false" or are omitted
-- Look for "Radio group options: [...]" in the description
-
-FIELD MATCHING STRATEGY:
-- Name fields → personal.firstName, personal.lastName, personal.fullName
-- Contact fields → personal.email, personal.phone
-- Address fields → personal.address.*
-- Current position → professional.currentTitle
-- Company → professional.experience[0].company (most recent)
-- Skills → professional.skills.* (choose most relevant type)
-- Education → education[0].* (most recent/relevant)
-- Experience → professional.experience[*] (choose most relevant)
-- Authorization/Legal questions → Use common sense: usually "Yes" for work authorization
-- Referral questions → Usually "No" unless explicitly mentioned in profile
-
-IMPORTANT GUIDELINES:
-- For dropdowns: MUST use exact text from available options
-- For yes/no questions: Return "Yes" or "No" (exact case from options)
-- For experience levels: Match to actual experience (Junior, Mid-level, Senior)
-- For education dropdowns: Use full degree names ("Bachelor of Science", not "BS")
-- Skip fields if no appropriate data exists
-- For required fields, try harder to find appropriate data
-
-Example response:
-{
-  "input[name='firstName']": "Alexander",
-  "input[name='email']": "dovjobs@gmail.com",
-  "select[name='experience-level']": "Senior",
-  "input[type='checkbox'][name='java-experience']": "true",
-  "input[type='radio'][name='authorization'][value='yes']": "true"
-}
-
-Return ONLY the JSON object, no additional text.`;
-
-// Log startup information
 console.log(`EasyDaddy background script loaded. Using model: ${CONFIG.model}`);
 console.log(`API base: ${CONFIG.baseUrl} | JSON mode: ${CONFIG.supportsJsonMode} | Temp: ${CONFIG.temperature} | Max tokens: ${CONFIG.maxTokens}`);
-
-async function chat(systemPrompt: string, userContent: string, modelName?: string): Promise<any> {
+async function chat(systemPrompt, userContent, modelName) {
   const config = buildModelConfig();
-  const apiUrl = config.baseUrl + '/chat/completions';
-  
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${config.apiKey}`,
+  const apiUrl = config.baseUrl + "/chat/completions";
+  const headers = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${config.apiKey}`
   };
-
-  // Add OpenRouter-specific headers if using OpenRouter
-  if (config.baseUrl.includes('openrouter.ai')) {
-    headers['HTTP-Referer'] = CONFIG.siteUrl;
-    headers['X-Title'] = CONFIG.siteName;
+  if (config.baseUrl.includes("openrouter.ai")) {
+    headers["HTTP-Referer"] = CONFIG.siteUrl;
+    headers["X-Title"] = CONFIG.siteName;
   }
-
-  const requestBody: any = {
+  const requestBody = {
     model: config.model,
     messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userContent },
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userContent }
     ],
     temperature: config.temperature,
-    max_tokens: config.maxTokens,
+    max_tokens: config.maxTokens
   };
-
-  // Add response_format for JSON mode if supported
-  if (config.supportsJsonMode) {
+  {
     requestBody.response_format = { type: "json_object" };
   }
-
-  if (CONFIG.debug) {
-    console.log('Chat request:', { model: config.model, headers, requestBody });
+  {
+    console.log("Chat request:", { model: config.model, headers, requestBody });
   }
-
   const response = await fetch(apiUrl, {
-    method: 'POST',
+    method: "POST",
     headers,
-    body: JSON.stringify(requestBody),
+    body: JSON.stringify(requestBody)
   });
-
   if (!response.ok) {
     const errorBody = await response.text();
     throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorBody}`);
   }
-
   const data = await response.json();
-
   try {
     return JSON.parse(data.choices[0].message.content);
   } catch (parseError) {
-    console.warn('Failed to parse JSON response, returning raw content:', data.choices[0].message.content);
+    console.warn("Failed to parse JSON response, returning raw content:", data.choices[0].message.content);
     throw new Error(`Failed to parse JSON response: ${parseError.message}`);
   }
 }
-
 browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log(`[EasyDaddy] Message received in background (${browserAPI.name}):`, message);
-
-  if (message.type === 'extract_profile') {
+  if (message.type === "extract_profile") {
     (async () => {
       try {
         const structuredData = await chat(EXTRACT_PROFILE_PROMPT, message.text);
-        console.log('[AI AUTOFILL RAW RESPONSE] extract_profile:', structuredData);
+        console.log("[AI AUTOFILL RAW RESPONSE] extract_profile:", structuredData);
         sendResponse(structuredData);
       } catch (error) {
-        console.error('Error during profile extraction:', error);
+        console.error("Error during profile extraction:", error);
         sendResponse({ error: error.message });
       }
     })();
-    return true; // Indicates async response
+    return true;
   }
-  if (message.type === 'autofill') {
+  if (message.type === "autofill") {
     (async () => {
       const { context, profile } = message;
-      const allowedSelectors = (context.fields || [])
-        .map((f: any) => f.selector)
-        .filter(Boolean);
-      const allowedSelectorsStr = allowedSelectors.length > 0
-        ? allowedSelectors.map(s => `  "${s}"`).join(',\n')
-        : '';
+      const allowedSelectors = (context.fields || []).map((f) => f.selector).filter(Boolean);
+      const allowedSelectorsStr = allowedSelectors.length > 0 ? allowedSelectors.map((s) => `  "${s}"`).join(",\n") : "";
       const strictAutofillPrompt = `You are FormAutoFiller_v3, an expert at web form autofill using structured user profiles.
 
 IMPORTANT: You MUST use ONLY the following selectors as keys for your output:
@@ -338,48 +268,38 @@ PAGE_CONTEXT and USER_PROFILE:
       const promptContext = {
         PAGE_CONTEXT: context,
         USER_PROFILE: profile,
-        INSTRUCTIONS: message.instructions || ''
+        INSTRUCTIONS: message.instructions || ""
       };
       try {
         const userContentString = JSON.stringify(promptContext, null, 2);
         const fillData = await chat(strictAutofillPrompt, userContentString);
-        console.log('[AI AUTOFILL RAW RESPONSE] autofill:', fillData);
+        console.log("[AI AUTOFILL RAW RESPONSE] autofill:", fillData);
         sendResponse(fillData);
       } catch (error) {
-        console.error('Error during autofill:', error);
+        console.error("Error during autofill:", error);
         sendResponse({ error: error.message });
       }
     })();
-    return true; // Indicates async response
+    return true;
   }
 });
-
-// Create Extension Bus for background
-const backgroundHandlers: Handlers = {
+const backgroundHandlers = {
   form: {
-    async analyze(submissionData: FormSubmissionData, { tab }) {
+    async analyze(submissionData, { tab }) {
       try {
-        console.log('[EasyDaddy Background] Analyzing form submission:', submissionData);
-        
-        // Get current active profile
+        console.log("[EasyDaddy Background] Analyzing form submission:", submissionData);
         const activeProfileId = await getActiveProfileId();
         if (!activeProfileId) {
-          return { shouldPromptSave: false, message: 'No active profile' };
+          return { shouldPromptSave: false, message: "No active profile" };
         }
-        
         const currentProfile = await getProfile(activeProfileId) || {};
         const existingSites = currentProfile.sites || [];
-        
-        // Find existing site data
-        const existingSite = existingSites.find((site: ProfileSiteData) => 
-          site.domain === submissionData.domain
+        const existingSite = existingSites.find(
+          (site) => site.domain === submissionData.domain
         );
-        
-        // Compare fields
-        const existingFields = existingSite?.fields || {};
-        const newFields: Record<string, string> = {};
-        const conflictFields: Record<string, { old: string; new: string }> = {};
-        
+        const existingFields = (existingSite == null ? void 0 : existingSite.fields) || {};
+        const newFields = {};
+        const conflictFields = {};
         for (const [key, value] of Object.entries(submissionData.fields)) {
           if (!(key in existingFields)) {
             newFields[key] = value;
@@ -390,46 +310,35 @@ const backgroundHandlers: Handlers = {
             };
           }
         }
-        
         const hasNewData = Object.keys(newFields).length > 0 || Object.keys(conflictFields).length > 0;
-        
-        const response: AutoSaveResponse & { data: FormSubmissionData } = {
+        const response = {
           shouldSave: hasNewData,
           newFields,
           conflictFields,
           data: submissionData
         };
-        
         if (hasNewData) {
           response.shouldPromptSave = true;
-          console.log('[EasyDaddy Background] Found new/changed fields:', { newFields, conflictFields });
+          console.log("[EasyDaddy Background] Found new/changed fields:", { newFields, conflictFields });
         }
-        
         return response;
-        
       } catch (error) {
-        console.error('[EasyDaddy Background] Error analyzing form:', error);
+        console.error("[EasyDaddy Background] Error analyzing form:", error);
         return { shouldPromptSave: false, error: error.message };
       }
     },
-    
-    async save(submissionData: FormSubmissionData, { tab }) {
+    async save(submissionData, { tab }) {
       try {
-        console.log('[EasyDaddy Background] Saving form data:', submissionData);
-        
+        console.log("[EasyDaddy Background] Saving form data:", submissionData);
         const activeProfileId = await getActiveProfileId();
         if (!activeProfileId) {
-          throw new Error('No active profile');
+          throw new Error("No active profile");
         }
-        
         const currentProfile = await getProfile(activeProfileId) || {};
         const existingSites = currentProfile.sites || [];
-        
-        // Find or create site entry
-        let siteData = existingSites.find((site: ProfileSiteData) => 
-          site.domain === submissionData.domain
+        let siteData = existingSites.find(
+          (site) => site.domain === submissionData.domain
         );
-        
         if (!siteData) {
           siteData = {
             domain: submissionData.domain,
@@ -440,42 +349,33 @@ const backgroundHandlers: Handlers = {
           };
           existingSites.push(siteData);
         }
-        
-        // Merge fields
         siteData.fields = {
           ...siteData.fields,
           ...submissionData.fields
         };
         siteData.lastUsed = submissionData.timestamp;
         siteData.useCount = (siteData.useCount || 0) + 1;
-        
-        // Update profile
         const updatedProfile = {
           ...currentProfile,
           sites: existingSites
         };
-        
         await saveProfile(activeProfileId, updatedProfile);
-        
-        console.log('[EasyDaddy Background] Form data saved successfully');
+        console.log("[EasyDaddy Background] Form data saved successfully");
         return { success: true, profileId: activeProfileId };
-        
       } catch (error) {
-        console.error('[EasyDaddy Background] Error saving form data:', error);
+        console.error("[EasyDaddy Background] Error saving form data:", error);
         throw error;
       }
     }
   },
-  
   // Test handler
   ping() {
-    return { status: 'background alive', timestamp: new Date().toISOString() };
+    return { status: "background alive", timestamp: (/* @__PURE__ */ new Date()).toISOString() };
   }
 };
-
-const bus = makeBus('background', {
+makeBus("background", {
   handlers: backgroundHandlers,
-  external: true // Allow external connections if needed
+  external: true
+  // Allow external connections if needed
 });
-
-console.log('[EasyDaddy Background] Extension Bus initialized');
+console.log("[EasyDaddy Background] Extension Bus initialized");

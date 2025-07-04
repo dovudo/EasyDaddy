@@ -127,4 +127,38 @@ export interface AIPromptConfig {
   temperature: number;
   maxTokens: number;
   systemPrompt: string;
+}
+
+// Auto-save form data types
+export interface FormSubmissionData {
+  url: string;
+  domain: string;
+  fields: Record<string, string>;
+  formId?: string;
+  formClass?: string;
+  timestamp: string;
+}
+
+export interface ProfileSiteData {
+  domain: string;
+  url: string;
+  fields: Record<string, string>;
+  timestamp: string;
+  lastUsed?: string;
+  useCount?: number;
+}
+
+export interface AutoSaveRequest {
+  type: 'FORM_SUBMITTED';
+  data: FormSubmissionData;
+}
+
+export interface AutoSaveResponse {
+  shouldSave: boolean;
+  newFields: Record<string, string>;
+  conflictFields: Record<string, { old: string; new: string }>;
+}
+
+export interface ProfileWithSites extends ProfileData {
+  sites?: ProfileSiteData[];
 } 

@@ -1,3 +1,6 @@
+import { makeBus } from '@davestewart/extension-bus';
+import type { FormSubmissionData } from './lib/types';
+
 interface FieldInfo {
   selector: string;
   label: string;
@@ -333,3 +336,131 @@ window.browserAPI?.runtime.onMessage.addListener((message: any, sender: any, sen
 });
 
 console.log(`[EasyDaddy] Content script loaded and ready (${window.browserAPI?.name || 'unknown'}).`);
+
+// Create Extension Bus for content script
+const bus = makeBus('content', {
+  target: 'background',
+  handlers: {
+    // Handlers for commands from popup/background
+    ping() {
+      return { status: 'content script alive', url: window.location.href };
+    }
+  }
+});
+
+// Form submission detection
+function extractFormData(form: HTMLFormElement): Record<string, string> {
+  const data: Record<string, string> = {};
+  const formData = new FormData(form);
+  
+  // Get data from FormData
+  formData.forEach((value, key) => {
+    if (typeof value === 'string' && value.trim()) {
+      data[key] = value.trim();
+    }
+  });
+  
+  // Also check for inputs not in FormData (like those without name)
+  const inputs = form.querySelectorAll('input, select, textarea');
+  inputs.forEach((input: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement) => {
+    const name = input.name || input.id || `field_${Math.random().toString(36).substr(2, 9)}`;
+    const value = input.value?.trim();
+    
+    if (value && !data[name]) {
+      data[name] = value;
+    }
+  });
+  
+  return data;
+}
+
+function getDomain(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return 'unknown';
+  }
+}
+
+// Listen for form submissions
+document.addEventListener('submit', async (event) => {
+  const form = event.target as HTMLFormElement;
+  if (!form || form.tagName !== 'FORM') return;
+  
+  try {
+    const fields = extractFormData(form);
+    
+    // Skip if no meaningful data
+    if (Object.keys(fields).length === 0) return;
+    
+    const submissionData: FormSubmissionData = {
+      url: window.location.href,
+      domain: getDomain(window.location.href),
+      fields,
+      formId: form.id || undefined,
+      formClass: form.className || undefined,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.log('[EasyDaddy] Form submitted:', submissionData);
+    
+    // Send to background for analysis
+    const response = await bus.call('form/analyze', submissionData);
+    
+    if (response?.shouldPromptSave) {
+      // Show inline notification or send message to popup
+      showSavePrompt(response);
+    }
+    
+  } catch (error) {
+    console.error('[EasyDaddy] Error processing form submission:', error);
+  }
+});
+
+// Show save prompt (simple inline notification)
+function showSavePrompt(response: any) {
+  // Create a simple notification div
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #4CAF50;
+    color: white;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 10000;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    max-width: 300px;
+    cursor: pointer;
+  `;
+  
+  notification.innerHTML = `
+    <div style="font-weight: bold; margin-bottom: 8px;">🔒 EasyDaddy</div>
+    <div>Save ${Object.keys(response.newFields || {}).length} new fields to profile?</div>
+    <div style="margin-top: 8px; font-size: 12px; opacity: 0.9;">Click to save</div>
+  `;
+  
+  notification.addEventListener('click', async () => {
+    try {
+      await bus.call('form/save', response.data);
+      notification.style.background = '#2196F3';
+      notification.innerHTML = '<div style="font-weight: bold;">✅ Saved to profile!</div>';
+      setTimeout(() => notification.remove(), 2000);
+    } catch (error) {
+      console.error('[EasyDaddy] Error saving form data:', error);
+      notification.remove();
+    }
+  });
+  
+  document.body.appendChild(notification);
+  
+  // Auto-remove after 10 seconds
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.remove();
+    }
+  }, 10000);
+}
