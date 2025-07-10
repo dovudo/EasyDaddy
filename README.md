@@ -12,7 +12,9 @@
 | **Intelligent Autofill** | ChatGPT analyses page context & maps your data to each field. |
 | **File Import** | Drop `.txt`, `.pdf`, `.md` with your CV / project brief – EasyDaddy extracts structured data automatically. |
 | **Local-first Storage** | All profiles are kept in your browser's IndexedDB (AES-GCM encrypted). |
-| **One-click "Fill Out"** | Hit the button in the popup – forms are scanned and populated instantly. |
+| **Multiple Access Methods** | Popup button, right-click context menu, or keyboard shortcuts. |
+| **Cross-Browser Support** | Works on Chrome, Arc, Edge, Firefox, and Safari with optimized UX per browser. |
+| **Safari-Optimized** | Context menu and keyboard shortcuts solve Safari popup limitations. |
 | **Highlight & Edit** | Newly filled fields flash yellow for 1 s so you can review / tweak. |
 
 ---
@@ -148,25 +150,44 @@ EasyDaddy is designed for **maximum cross-browser compatibility**. The extension
 
 > **Goal:** Deliver a single extension codebase that works across all major browsers, including Safari, with minimal browser-specific code and maximum maintainability.
 
-## 🍏 Safari Support & Known Issues
+## 🍎 Safari Support & Multi-Modal Access
 
-### Установка в Safari
+### Safari Installation
 
-1. Откройте Xcode (или Safari Extension Converter)
-2. Импортируйте папку расширения как WebExtension Project
-3. Соберите и установите расширение в Safari (следуйте инструкциям Xcode)
-4. Включите расширение в настройках Safari (Preferences → Extensions)
+1. Open Xcode (or Safari Extension Converter)
+2. Import extension folder as WebExtension Project
+3. Build and install extension in Safari (follow Xcode instructions)
+4. Enable extension in Safari Preferences → Extensions
 
-### Известные ограничения Safari
+### Safari Popup "Limitation" - Actually a Feature!
 
-- Не все Chrome/Firefox API поддерживаются (особенно chrome.scripting, chrome.action)
-- CSP может блокировать некоторые динамические скрипты (eval, dynamic import)
-- Ограничения на работу background/service worker
-- Возможны отличия в работе storage и messaging
-- Нет поддержки некоторых экспериментальных API
-- Возможны проблемы с PDF-парсингом (pdfjs-dist)
+When you click the EasyDaddy icon in Safari, it opens in "tab mode" instead of overlay popup. **This is Safari's intended behavior for security**, not a bug.
 
-> Если расширение не работает в Safari, проверьте консоль на ошибки и убедитесь, что все разрешения указаны в manifest.json.
+### Solution: Multiple Access Methods
+
+EasyDaddy provides **three ways** to fill forms, making it more powerful than popup-only extensions:
+
+#### 1. **Right-click Context Menu** (Recommended for Safari)
+- Right-click anywhere on a webpage
+- Select "EasyDaddy - Fill Forms" 
+- Forms filled instantly with active profile
+
+#### 2. **Keyboard Shortcuts**
+- `Cmd+Option+F` - Fill forms on current page
+- `Cmd+Option+E` - Open EasyDaddy settings
+
+#### 3. **Extension Icon** (Settings & Profile Management)
+- Click extension icon for profile management
+- Works in tab mode with full functionality
+
+### Why This is Better Than Traditional Popups
+
+- **Always accessible** - works regardless of browser limitations
+- **Faster workflow** - right-click is faster than icon hunting
+- **Native integration** - feels like built-in Safari feature
+- **Power user friendly** - keyboard shortcuts for efficiency
+
+> See `docs/safari-popup-solution.md` for detailed technical explanation.
 
 ```
 MIT © 2025 YOUR_NAME_OR_COMPANY
