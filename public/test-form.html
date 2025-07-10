@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EasyDaddy Test Form</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 32px; }
+    h1 { text-align: center; }
+    form { display: flex; flex-direction: column; gap: 16px; }
+    label { font-weight: bold; margin-bottom: 4px; }
+    input, select, textarea { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    .section { margin-bottom: 24px; }
+    .shadow-host { margin: 24px 0; padding: 12px; border: 1px dashed #aaa; background: #fafafa; }
+    iframe { width: 100%; height: 180px; border: 1px solid #ccc; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>EasyDaddy Test Form</h1>
+    <form id="main-form">
+      <div class="section">
+        <label for="firstName">First Name</label>
+        <input id="firstName" name="firstName" type="text" autocomplete="given-name" placeholder="John" required>
+      </div>
+      <div class="section">
+        <label for="lastName">Last Name</label>
+        <input id="lastName" name="lastName" type="text" autocomplete="family-name" placeholder="Doe" required>
+      </div>
+      <div class="section">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" placeholder="john@example.com">
+      </div>
+      <div class="section">
+        <label for="phone">Phone</label>
+        <input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="+1 555 123 4567">
+      </div>
+      <div class="section">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="new-password" placeholder="••••••••">
+      </div>
+      <div class="section">
+        <label for="country">Country</label>
+        <select id="country" name="country">
+          <option value="">Select...</option>
+          <option>USA</option>
+          <option>Canada</option>
+          <option>Germany</option>
+          <option>France</option>
+        </select>
+      </div>
+      <div class="section">
+        <label>Gender</label>
+        <label><input type="radio" name="gender" value="male"> Male</label>
+        <label><input type="radio" name="gender" value="female"> Female</label>
+        <label><input type="radio" name="gender" value="other"> Other</label>
+      </div>
+      <div class="section">
+        <label><input type="checkbox" name="newsletter" value="yes"> Subscribe to newsletter</label>
+      </div>
+      <div class="section">
+        <label for="bio">Short Bio</label>
+        <textarea id="bio" name="bio" rows="3" placeholder="Tell us about yourself..."></textarea>
+      </div>
+      <div class="section">
+        <button type="submit">Submit</button>
+      </div>
+    </form>
+    <div class="section shadow-host" id="shadow-root-demo">
+      <strong>Shadow DOM Test:</strong>
+      <div id="shadow-mount"></div>
+    </div>
+    <div class="section">
+      <strong>Iframe Test:</strong>
+      <iframe srcdoc='
+        <form id="iframe-form">
+          <label for="iframeField">Iframe Field</label>
+          <input id="iframeField" name="iframeField" type="text" placeholder="Inside iframe">
+        </form>
+      '></iframe>
+    </div>
+  </div>
+  <script>
+    // Shadow DOM demo
+    const shadowMount = document.getElementById('shadow-mount');
+    const shadowRoot = shadowMount.attachShadow({ mode: 'open' });
+    shadowRoot.innerHTML = `
+      <form id="shadow-form">
+        <label for="shadowField">Shadow Field</label>
+        <input id="shadowField" name="shadowField" type="text" placeholder="Inside shadow root">
+      </form>
+    `;
+  </script>
+</body>
+</html> 

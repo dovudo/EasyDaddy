@@ -22,6 +22,89 @@ import { makeBus, type Handlers } from '@davestewart/extension-bus';
 import type { FormSubmissionData, ProfileSiteData, AutoSaveResponse } from './lib/types';
 import { getActiveProfileId, getProfile, saveProfile } from './lib/storage';
 
+// Context Menu and Keyboard Shortcuts Setup
+function setupContextMenuAndShortcuts() {
+  try {
+    // Create context menu for form filling
+    browserAPI.contextMenus.create({
+      id: 'easydaddy-fill',
+      title: 'EasyDaddy - Fill Forms',
+      contexts: ['page', 'frame'],
+      documentUrlPatterns: ['http://*/*', 'https://*/*']
+    });
+
+    // Context menu click handler
+    browserAPI.contextMenus.onClicked.addListener(async (info, tab) => {
+      if (info.menuItemId === 'easydaddy-fill' && tab?.id) {
+        console.log('[EasyDaddy] Context menu triggered for form filling');
+        await fillFormsOnTab(tab.id);
+      }
+    });
+
+    // Keyboard shortcuts handler
+    browserAPI.commands.onCommand.addListener(async (command) => {
+      console.log('[EasyDaddy] Keyboard command:', command);
+      
+      switch (command) {
+        case 'fill-forms':
+          const [tab] = await browserAPI.tabs.query({ active: true, currentWindow: true });
+          if (tab?.id) {
+            await fillFormsOnTab(tab.id);
+          }
+          break;
+          
+        case 'open-popup':
+          // Try to open popup - fallback for Safari
+          if (browserAPI.action?.openPopup) {
+            await browserAPI.action.openPopup();
+          } else {
+            // For Safari - open extension page in new tab
+            await browserAPI.tabs.create({
+              url: browserAPI.runtime.getURL('popup.html')
+            });
+          }
+          break;
+      }
+    });
+
+    console.log('[EasyDaddy] Context menu and keyboard shortcuts initialized');
+  } catch (error) {
+    console.warn('[EasyDaddy] Context menu setup failed (may not be supported):', error);
+  }
+}
+
+// Universal form filling function for any trigger
+async function fillFormsOnTab(tabId) {
+  try {
+    const activeProfileId = await getActiveProfileId();
+    if (!activeProfileId) {
+      console.log('[EasyDaddy] No active profile, cannot fill forms');
+      return;
+    }
+
+    const profile = await getProfile(activeProfileId);
+    if (!profile) {
+      console.log('[EasyDaddy] Profile not found, cannot fill forms');
+      return;
+    }
+
+    // Send fill message to content script
+    const response = await browserAPI.tabs.sendMessage(tabId, {
+      type: 'start_fill',
+      profileId: activeProfileId,
+      profile: profile,
+      instructions: '' // No additional instructions from context menu
+    });
+
+    console.log('[EasyDaddy] Form filling result:', response);
+  } catch (error) {
+    console.error('[EasyDaddy] Error filling forms:', error);
+  }
+}
+
+// Initialize context menu and shortcuts when extension starts
+setupContextMenuAndShortcuts();
+
 // Comprehensive, extensible profile schema
 const PROFILE_SCHEMA = {
   "personal": {

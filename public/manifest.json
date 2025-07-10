@@ -6,7 +6,8 @@
   "permissions": [
     "storage",
     "activeTab",
-    "tabs"
+    "tabs",
+    "contextMenus"
   ],
   "host_permissions": ["<all_urls>"],
   "background": {
@@ -25,6 +26,22 @@
       "all_frames": false
     }
   ],
+  "commands": {
+    "fill-forms": {
+      "suggested_key": {
+        "default": "Alt+Shift+F",
+        "mac": "Command+Option+F"
+      },
+      "description": "Fill forms on current page"
+    },
+    "open-popup": {
+      "suggested_key": {
+        "default": "Alt+Shift+E",
+        "mac": "Command+Option+E"
+      },
+      "description": "Open EasyDaddy popup"
+    }
+  },
   "web_accessible_resources": [
     {
       "resources": ["pdf-worker.js"],

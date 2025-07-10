@@ -226,20 +226,20 @@ export function handleBrowserError(error: any, context: string): string {
   // Browser-specific error messages
   if (browserAPI.name === 'Arc') {
     if (errorMsg.includes('Could not establish connection')) {
-      return 'Не удалось подключиться к странице. В Arc браузере попробуйте:\n• Перезагрузить вкладку\n• Отключить и включить расширение\n• Проверить разрешения расширения';
+      return 'Unable to connect to page. For Arc browser try:\n• Reload the tab\n• Disable and re-enable extension\n• Check extension permissions';
     }
   }
   
   if (errorMsg.includes('Could not establish connection') || 
       errorMsg.includes('receiving end does not exist')) {
-    return 'Не удалось подключиться к странице. Пожалуйста:\n• Перезагрузите вкладку\n• Попробуйте снова\n• Убедитесь, что страница полностью загружена';
+    return 'Unable to connect to page. Please:\n• Reload the tab\n• Try again\n• Make sure the page is fully loaded';
   }
   
   if (errorMsg.includes('Extension context invalidated')) {
-    return 'Расширение было перезагружено. Пожалуйста, обновите страницу и попробуйте снова.';
+    return 'Extension was reloaded. Please refresh the page and try again.';
   }
   
-  return `Произошла ошибка: ${errorMsg}\nПопробуйте перезагрузить страницу и повторить попытку.`;
+  return `Error occurred: ${errorMsg}\nTry reloading the page and trying again.`;
 }
 
 // Browser feature detection

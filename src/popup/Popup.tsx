@@ -162,7 +162,7 @@ const Popup: React.FC = () => {
         // Check if browser supports PDF processing
         const capabilities = getBrowserCapabilities();
         if (!capabilities.supportsPDF) {
-          throw new Error(`PDF processing не поддерживается в ${capabilities.name}. Используйте текстовые файлы.`);
+          throw new Error(`PDF processing not supported in ${capabilities.name}. Please use text files.`);
         }
         
         // Dynamically import pdfjs-dist
@@ -231,7 +231,7 @@ const Popup: React.FC = () => {
           alert(handleBrowserError(new Error(response.error), 'tab communication'));
         }
       } else {
-        alert('Не удалось найти активную вкладку. Убедитесь, что вкладка открыта и активна.');
+        alert('Unable to find active tab. Make sure a tab is open and active.');
       }
       if (sendOnce) {
         setInstructions('');
@@ -283,8 +283,23 @@ const Popup: React.FC = () => {
           {!isPopup && (
             <div className="bg-blue-50 border border-blue-300 rounded p-4 text-center mb-4">
               <div className="text-lg font-bold mb-2">📱 Tab Mode</div>
-              <div className="mb-2">Расширение открыто в режиме вкладки (Arc, Safari iOS).<br/>Это нормально - все функции доступны!</div>
+              <div className="mb-2">Extension opened in tab mode (Arc, Safari iOS).<br/>This is normal - all functions are available!</div>
               <div className="text-xs text-gray-500">Mode: {isPopup ? 'Popup' : 'Tab'} | URL: {window.location.protocol}</div>
+            </div>
+          )}
+          
+          {isSafari && (
+            <div className="bg-amber-50 border border-amber-300 rounded p-4 mb-4">
+              <div className="text-lg font-bold mb-2">🍎 Safari Alternative Access</div>
+              <div className="mb-2">Since Safari limits popup access, you can also:</div>
+              <ul className="text-sm list-disc ml-4 space-y-1">
+                <li><strong>Right-click</strong> on any webpage → "EasyDaddy - Fill Forms"</li>
+                <li><strong>Keyboard shortcut:</strong> Cmd+Option+F to fill forms</li>
+                <li><strong>Keyboard shortcut:</strong> Cmd+Option+E to open this interface</li>
+              </ul>
+              <div className="text-xs text-gray-600 mt-2">
+                These methods work even when popup doesn't!
+              </div>
             </div>
           )}
           
@@ -466,9 +481,9 @@ const Popup: React.FC = () => {
                 <div className="bg-blue-50 border border-blue-200 rounded p-3 mt-4 text-sm">
                   <strong>Arc Browser Tips:</strong>
                   <ul className="mt-1 ml-4 list-disc text-xs">
-                    <li>Если кнопки не работают, попробуйте перезагрузить вкладку</li>
-                    <li>Убедитесь, что расширение имеет все необходимые разрешения</li>
-                    <li>PDF обработка может быть ограничена в Arc</li>
+                    <li>If buttons don't work, try reloading the tab</li>
+                    <li>Make sure extension has all necessary permissions</li>
+                    <li>PDF processing may be limited in Arc</li>
                   </ul>
                 </div>
               )}
@@ -489,9 +504,9 @@ const Popup: React.FC = () => {
             <div className="bg-green-50 border border-green-200 rounded p-3 mt-4 text-sm">
               <strong>Safari/WebKit Notice:</strong>
               <ul className="mt-1 ml-4 list-disc text-xs">
-                <li>Некоторые функции могут быть ограничены из-за политики безопасности Safari (CSP, background scripts, PDF-parsing).</li>
-                <li>Если что-то не работает — проверьте консоль Safari на ошибки.</li>
-                <li>Для стабильной работы используйте последнюю версию Safari/WebExtensions API.</li>
+                <li>Some functions may be limited due to Safari security policies (CSP, background scripts, PDF-parsing).</li>
+                                  <li>If something doesn't work - check Safari console for errors.</li>
+                  <li>For stable operation use the latest Safari/WebExtensions API version.</li>
               </ul>
             </div>
           )}
