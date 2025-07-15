@@ -1,10 +1,13 @@
 {
-  "name": "easydaddy",
-  "version": "0.1.0",
+  "name": "easydaddyext",
   "private": true,
+  "version": "0.2.0",
   "scripts": {
     "dev": "vite build --watch",
-    "build": "vite build"
+    "build": "npm run build:main && npm run build:content && mv dist/content.iife.js dist/content.js",
+    "build:main": "vite build",
+    "build:content": "BUILD_TARGET=content vite build",
+    "preview": "vite preview"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.258",

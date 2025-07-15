@@ -30,14 +30,14 @@
     "fill-forms": {
       "suggested_key": {
         "default": "Alt+Shift+F",
-        "mac": "Command+Option+F"
+        "mac": "Alt+Shift+F"
       },
       "description": "Fill forms on current page"
     },
     "open-popup": {
       "suggested_key": {
         "default": "Alt+Shift+E",
-        "mac": "Command+Option+E"
+        "mac": "Alt+Shift+E"
       },
       "description": "Open EasyDaddy popup"
     }

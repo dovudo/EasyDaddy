@@ -16,8 +16,8 @@ import {
   LLMConfig,
   CONFIG,
   buildModelConfig
-} from './lib/llm-config.js';
-import { browserAPI } from './lib/browser-compat.js';
+} from './lib/llm-config';
+import { browserAPI } from './lib/browser-compat';
 import { makeBus, type Handlers } from '@davestewart/extension-bus';
 import type { FormSubmissionData, ProfileSiteData, AutoSaveResponse } from './lib/types';
 import { getActiveProfileId, getProfile, saveProfile } from './lib/storage';
@@ -25,24 +25,30 @@ import { getActiveProfileId, getProfile, saveProfile } from './lib/storage';
 // Context Menu and Keyboard Shortcuts Setup
 function setupContextMenuAndShortcuts() {
   try {
-    // Create context menu for form filling
-    browserAPI.contextMenus.create({
-      id: 'easydaddy-fill',
-      title: 'EasyDaddy - Fill Forms',
-      contexts: ['page', 'frame'],
-      documentUrlPatterns: ['http://*/*', 'https://*/*']
-    });
+    // Context menu - only if supported
+    if (browserAPI.contextMenus) {
+      browserAPI.contextMenus.create({
+        id: 'easydaddy-fill',
+        title: 'EasyDaddy - Fill Forms',
+        contexts: ['page', 'frame'],
+        documentUrlPatterns: ['http://*/*', 'https://*/*']
+      });
 
-    // Context menu click handler
-    browserAPI.contextMenus.onClicked.addListener(async (info, tab) => {
-      if (info.menuItemId === 'easydaddy-fill' && tab?.id) {
-        console.log('[EasyDaddy] Context menu triggered for form filling');
-        await fillFormsOnTab(tab.id);
-      }
-    });
+      // Context menu click handler
+      browserAPI.contextMenus.onClicked.addListener(async (info, tab) => {
+        if (info.menuItemId === 'easydaddy-fill' && tab?.id) {
+          console.log('[EasyDaddy] Context menu triggered for form filling');
+          await fillFormsOnTab(tab.id);
+        }
+      });
+      console.log('[EasyDaddy] Context menu initialized');
+    } else {
+      console.log('[EasyDaddy] Context menus not supported in this browser');
+    }
 
-    // Keyboard shortcuts handler
-    browserAPI.commands.onCommand.addListener(async (command) => {
+    // Keyboard shortcuts handler - only if supported
+    if (browserAPI.commands) {
+      browserAPI.commands.onCommand.addListener(async (command) => {
       console.log('[EasyDaddy] Keyboard command:', command);
       
       switch (command) {
@@ -66,8 +72,12 @@ function setupContextMenuAndShortcuts() {
           break;
       }
     });
+      console.log('[EasyDaddy] Keyboard shortcuts initialized');
+    } else {
+      console.log('[EasyDaddy] Commands not supported in this browser');
+    }
 
-    console.log('[EasyDaddy] Context menu and keyboard shortcuts initialized');
+    console.log('[EasyDaddy] Context menu and keyboard shortcuts setup completed');
   } catch (error) {
     console.warn('[EasyDaddy] Context menu setup failed (may not be supported):', error);
   }

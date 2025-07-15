@@ -290,10 +290,31 @@ if (typeof window !== 'undefined' && !window.browserAPI) {
   };
 }
 
+function isSystemPage() {
+  return (
+    location.protocol === 'chrome-extension:' ||
+    location.protocol === 'chrome:' ||
+    location.protocol === 'about:' ||
+    location.protocol === 'edge:' ||
+    location.protocol === 'moz-extension:' ||
+    location.protocol === 'safari-extension:'
+  );
+}
+
 /**
  * Main message listener for the content script.
  */
 window.browserAPI?.runtime.onMessage.addListener((message: any, sender: any, sendResponse: any) => {
+  if (message.type === 'ping') {
+    sendResponse({ ok: true });
+    return true;
+  }
+  if (isSystemPage()) {
+    console.warn('[EasyDaddy] Content script: system page detected, skipping action.');
+    sendResponse && sendResponse({ success: false, error: 'System page, cannot fill forms.' });
+    return false;
+  }
+  console.log('[EasyDaddy] onMessage received:', message);
   if (message.type === 'start_fill') {
     (async () => {
       console.log(`[EasyDaddy] Scanning page for forms (${window.browserAPI?.name || 'unknown'})...`);
@@ -302,6 +323,7 @@ window.browserAPI?.runtime.onMessage.addListener((message: any, sender: any, sen
         title: document.title,
         fields: scanFields(),
       };
+      console.log('[EasyDaddy] scanFields result:', pageContext.fields);
 
       console.log('[EasyDaddy] Asking AI for autofill data...');
       try {
@@ -316,7 +338,7 @@ window.browserAPI?.runtime.onMessage.addListener((message: any, sender: any, sen
         console.log('[EasyDaddy] Received data from AI to fill:', fillData);
 
         if (fillData && !fillData.error && Object.keys(fillData).length > 0) {
-          console.log('[EasyDaddy] Filling form...');
+          console.log('[EasyDaddy] Filling form with selectors:', Object.keys(fillData));
           fillForm(fillData);
           sendResponse({ success: true, fieldsFound: pageContext.fields.length, fieldsFilled: Object.keys(fillData).length });
         } else if (fillData?.error) {
@@ -336,6 +358,11 @@ window.browserAPI?.runtime.onMessage.addListener((message: any, sender: any, sen
 });
 
 console.log(`[EasyDaddy] Content script loaded and ready (${window.browserAPI?.name || 'unknown'}).`);
+
+// --- EXTENDED LOGGING FOR DIAGNOSTICS ---
+window.addEventListener('DOMContentLoaded', () => {
+  console.log('[EasyDaddy] DOMContentLoaded. Content script active.');
+});
 
 // Create Extension Bus for content script
 const bus = makeBus('content', {

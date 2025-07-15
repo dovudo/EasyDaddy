@@ -36,6 +36,9 @@ const Popup: React.FC = () => {
   const [sitesData, setSitesData] = useState<ProfileSiteData[]>([]);
   const [showSitesData, setShowSitesData] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
+  const [newProfileName, setNewProfileName] = useState('');
+  const [isDeletingProfile, setIsDeletingProfile] = useState(false);
 
   // Create Extension Bus for popup
   const bus = makeBus('popup', {
@@ -117,24 +120,60 @@ const Popup: React.FC = () => {
   };
 
   const handleCreateProfile = async () => {
-    const id = prompt('Enter a name for the new profile:');
-    if (!id || profiles.includes(id)) {
-      if (id) alert(`Profile "${id}" already exists.`);
+    setIsCreatingProfile(true);
+    setNewProfileName('');
+  };
+
+  const handleSaveNewProfile = async () => {
+    const id = newProfileName.trim();
+    if (!id) {
+      setStatus('Please enter a profile name');
       return;
     }
-    await saveProfile(id, {});
-    setProfiles([...profiles, id]);
-    await handleSelectProfile(id);
+    if (profiles.includes(id)) {
+      setStatus(`Profile "${id}" already exists`);
+      return;
+    }
+    
+    try {
+      await saveProfile(id, {});
+      setProfiles([...profiles, id]);
+      await handleSelectProfile(id);
+      setIsCreatingProfile(false);
+      setNewProfileName('');
+      setStatus(`Profile "${id}" created successfully!`);
+    } catch (error) {
+      setStatus('Error creating profile');
+    }
+  };
+
+  const handleCancelCreateProfile = () => {
+    setIsCreatingProfile(false);
+    setNewProfileName('');
   };
 
   const handleDeleteProfile = async () => {
-    if (!activeProfile || !confirm(`Are you sure you want to delete profile "${activeProfile}"?`)) {
-      return;
+    if (!activeProfile) return;
+    setIsDeletingProfile(true);
+  };
+
+  const handleConfirmDeleteProfile = async () => {
+    if (!activeProfile) return;
+    
+    try {
+      await deleteProfile(activeProfile);
+      const remainingProfiles = profiles.filter((p) => p !== activeProfile);
+      setProfiles(remainingProfiles);
+      await handleSelectProfile(remainingProfiles[0] || '');
+      setIsDeletingProfile(false);
+      setStatus(`Profile "${activeProfile}" deleted successfully`);
+    } catch (error) {
+      setStatus('Error deleting profile');
     }
-    await deleteProfile(activeProfile);
-    const remainingProfiles = profiles.filter((p) => p !== activeProfile);
-    setProfiles(remainingProfiles);
-    await handleSelectProfile(remainingProfiles[0] || '');
+  };
+
+  const handleCancelDeleteProfile = () => {
+    setIsDeletingProfile(false);
   };
 
   const handleTextChange = async (newText: string) => {
@@ -209,15 +248,33 @@ const Popup: React.FC = () => {
   
   const handleFillForms = async () => {
     if (!activeProfile) {
-      alert('Please select a profile first.');
+      setStatus('❌ Please select a profile first');
       return;
     }
     setIsLoading(true);
+    setStatus('🚀 Starting form fill...');
+    
     try {
       const profileData = await getProfile(activeProfile);
       const tabs = await browserAPI.tabs.query({ active: true, currentWindow: true });
       const activeTab = tabs[0];
+      
       if (activeTab?.id) {
+        // Diagnostic ping
+        try {
+          const pingResponse = await browserAPI.tabs.sendMessage(activeTab.id, { type: 'ping' });
+          if (!pingResponse || !pingResponse.ok) {
+            setStatus('❌ Content script not detected in this tab. Try reloading the page, or make sure you are on a supported site (not file:// or a system page).');
+            setIsLoading(false);
+            return;
+          }
+        } catch (err) {
+          setStatus('❌ Content script not detected in this tab. Try reloading the page, or make sure you are on a supported site (not file:// or a system page).');
+          setIsLoading(false);
+          return;
+        }
+
+        setStatus('📋 Analyzing forms on page...');
         const response = await browserAPI.tabs.sendMessage(
           activeTab.id,
           {
@@ -227,18 +284,26 @@ const Popup: React.FC = () => {
             instructions,
           }
         );
-        if (response?.noConnection) {
-          alert(handleBrowserError(new Error(response.error), 'tab communication'));
+        
+        if (response?.error === 'System page, cannot fill forms.') {
+          setStatus('❌ Cannot fill forms on this page (system or extension page). Please open a regular website.');
+        } else if (response?.noConnection) {
+          setStatus(`❌ ${handleBrowserError(new Error(response.error), 'tab communication')}`);
+        } else if (response?.success) {
+          setStatus(`✅ Successfully filled ${response.fieldsFilled || 0} fields out of ${response.fieldsFound || 0} found`);
+        } else {
+          setStatus('⚠️ Form filling completed with some issues');
         }
       } else {
-        alert('Unable to find active tab. Make sure a tab is open and active.');
+        setStatus('❌ Unable to find active tab. Make sure a tab is open and active');
       }
+      
       if (sendOnce) {
         setInstructions('');
         setSendOnce(false);
       }
     } catch (error) {
-      alert(handleBrowserError(error, 'form filling'));
+      setStatus(`❌ ${handleBrowserError(error, 'form filling')}`);
     } finally {
       setIsLoading(false);
     }
@@ -307,36 +372,113 @@ const Popup: React.FC = () => {
            <div className="content">
               <section className="section mb-4">
                 <Label className="sectionTitle block mb-2">Profile Management</Label>
-                <div className="profileActions flex gap-2 mb-2">
-                  <select
-                    value={activeProfile}
-                    onChange={(e) => handleSelectProfile(e.target.value)}
-                    className="profileSelector border rounded px-2 py-1"
-                    disabled={!profiles.length}
-                  >
-                    <option value="" disabled>
-                      {profiles.length ? 'Select a profile' : 'No profiles'}
-                    </option>
-                    {profiles.map((p) => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
-                  </select>
-                  <Button 
-                    onClick={handleCreateProfile} 
-                    variant="secondary"
-                    className="button buttonSecondary buttonCompact"
-                  >
-                    New
-                  </Button>
-                  <Button 
-                    onClick={handleDeleteProfile} 
-                    variant="destructive"
-                    className="button buttonDanger buttonCompact" 
-                    disabled={!activeProfile}
-                  >
-                    Delete
-                  </Button>
-                </div>
+                
+                {!isCreatingProfile ? (
+                  <div className="profileActions flex gap-2 mb-2">
+                    <select
+                      value={activeProfile}
+                      onChange={(e) => handleSelectProfile(e.target.value)}
+                      className="profileSelector border rounded px-2 py-1 flex-1"
+                      disabled={!profiles.length}
+                    >
+                      <option value="" disabled>
+                        {profiles.length ? 'Select a profile' : 'No profiles'}
+                      </option>
+                      {profiles.map((p) => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+                    <Button 
+                      onClick={handleCreateProfile} 
+                      variant="secondary"
+                      className="button buttonSecondary buttonCompact"
+                    >
+                      ➕ New
+                    </Button>
+                    <Button 
+                      onClick={handleDeleteProfile} 
+                      variant="destructive"
+                      className="button buttonDanger buttonCompact" 
+                      disabled={!activeProfile}
+                    >
+                      🗑️
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="profileCreation space-y-3 mb-2">
+                    <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                      <Label htmlFor="new-profile-name" className="block text-sm font-medium mb-2">
+                        Create New Profile
+                      </Label>
+                      <input
+                        id="new-profile-name"
+                        type="text"
+                        value={newProfileName}
+                        onChange={(e) => setNewProfileName(e.target.value)}
+                        placeholder="Enter profile name (e.g., 'Work', 'Personal', 'Job Applications')"
+                        className="w-full border rounded px-3 py-2 text-sm"
+                        autoFocus
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            handleSaveNewProfile();
+                          } else if (e.key === 'Escape') {
+                            handleCancelCreateProfile();
+                          }
+                        }}
+                      />
+                      <div className="flex gap-2 mt-3">
+                        <Button 
+                          onClick={handleSaveNewProfile}
+                          variant="default"
+                          className="button buttonPrimary buttonCompact"
+                          disabled={!newProfileName.trim()}
+                        >
+                          ✅ Create
+                        </Button>
+                        <Button 
+                          onClick={handleCancelCreateProfile}
+                          variant="secondary"
+                          className="button buttonSecondary buttonCompact"
+                        >
+                          ❌ Cancel
+                        </Button>
+                      </div>
+                      <div className="text-xs text-gray-600 mt-2">
+                        💡 Tip: Use descriptive names like "Job Applications" or "Personal Info"
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {isDeletingProfile && activeProfile && (
+                  <div className="profileDeletion mb-4">
+                    <div className="bg-red-50 border border-red-200 rounded p-3">
+                      <Label className="block text-sm font-medium mb-2 text-red-800">
+                        ⚠️ Confirm Profile Deletion
+                      </Label>
+                      <p className="text-sm text-red-700 mb-3">
+                        Are you sure you want to delete profile <strong>"{activeProfile}"</strong>? 
+                        This action cannot be undone.
+                      </p>
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={handleConfirmDeleteProfile}
+                          variant="destructive"
+                          className="button buttonDanger buttonCompact"
+                        >
+                          🗑️ Delete Forever
+                        </Button>
+                        <Button 
+                          onClick={handleCancelDeleteProfile}
+                          variant="secondary"
+                          className="button buttonSecondary buttonCompact"
+                        >
+                          ❌ Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </section>
 
               <section className="section mb-4">
@@ -479,11 +621,12 @@ const Popup: React.FC = () => {
               
               {browserInfo?.name === 'Arc' && (
                 <div className="bg-blue-50 border border-blue-200 rounded p-3 mt-4 text-sm">
-                  <strong>Arc Browser Tips:</strong>
+                  <strong>🌟 Arc Browser Enhanced Mode:</strong>
                   <ul className="mt-1 ml-4 list-disc text-xs">
-                    <li>If buttons don't work, try reloading the tab</li>
-                    <li>Make sure extension has all necessary permissions</li>
-                    <li>PDF processing may be limited in Arc</li>
+                    <li>✅ Popup interface now works without modal dialogs</li>
+                    <li>🖱️ Right-click context menu available for quick form filling</li>
+                    <li>⌨️ Keyboard shortcuts: Alt+Shift+F (fill forms), Alt+Shift+E (open popup)</li>
+                    <li>💡 If issues persist, try refreshing the page and reloading the extension</li>
                   </ul>
                 </div>
               )}

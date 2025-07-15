@@ -23,6 +23,17 @@ interface BrowserAPI {
       remove: (keys: string | string[]) => Promise<void>;
     };
   };
+  contextMenus?: {
+    create: (createProperties: any) => void;
+    onClicked: {
+      addListener: (callback: (info: any, tab?: any) => void) => void;
+    };
+  };
+  commands?: {
+    onCommand: {
+      addListener: (callback: (command: string) => void) => void;
+    };
+  };
 }
 
 // Detect browser and create unified API
@@ -210,6 +221,31 @@ function createBrowserAPI(): BrowserAPI {
       }
     }
   };
+
+  // Add contextMenus API if available
+  if (api.contextMenus) {
+    promisifiedAPI.contextMenus = {
+      create: (createProperties: any) => {
+        api.contextMenus.create(createProperties);
+      },
+      onClicked: {
+        addListener: (callback: (info: any, tab?: any) => void) => {
+          api.contextMenus.onClicked.addListener(callback);
+        }
+      }
+    };
+  }
+
+  // Add commands API if available
+  if (api.commands) {
+    promisifiedAPI.commands = {
+      onCommand: {
+        addListener: (callback: (command: string) => void) => {
+          api.commands.onCommand.addListener(callback);
+        }
+      }
+    };
+  }
 
   return promisifiedAPI;
 }
